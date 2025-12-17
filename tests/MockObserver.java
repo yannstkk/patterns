@@ -1,3 +1,6 @@
+package tests;
+
+import src.exo1.ConcriteObserver1;
 
 public class MockObserver extends ConcriteObserver1 {
 

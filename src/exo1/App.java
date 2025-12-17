@@ -1,7 +1,8 @@
+package src.exo1;
 
 
 
-public class MaClasse {
+public class App {
 
 
     public static void main(String[] args) {

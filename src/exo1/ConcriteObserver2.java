@@ -1,3 +1,6 @@
+package src.exo1;
+
+
 public class ConcriteObserver2 implements Observer {
 
 

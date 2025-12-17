@@ -1,3 +1,5 @@
+package src.exo1;
+
 
  interface Observer {
 
