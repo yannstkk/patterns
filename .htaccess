@@ -1,0 +1,40 @@
+# Configuration Apache pour Memory Game MVC
+
+# Activer le module de réécriture
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Rediriger vers index.php si le fichier/dossier n'existe pas
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [L,QSA]
+</IfModule>
+
+# Désactiver l'affichage des erreurs en production
+# php_flag display_errors Off
+
+# Définir le fuseau horaire (ajuster selon vos besoins)
+php_value date.timezone "Europe/Paris"
+
+# Augmenter les limites de mémoire si nécessaire
+php_value memory_limit 128M
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+
+# Empêcher l'accès direct aux fichiers sensibles
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protection des fichiers de configuration
+<FilesMatch "\.(sql|md|log)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Permettre l'accès aux fichiers statiques
+<FilesMatch "\.(css|js|jpg|jpeg|png|gif|ico|woff|woff2|ttf|svg)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
