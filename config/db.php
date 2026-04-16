@@ -30,7 +30,7 @@ if (!function_exists('informationBDD')) {
             200 => array(
                 'login' => $user_preprod,
                 'password' => $mdp_preprod,
-                'bd' => 'BO_local'
+                'bd' => 'bddstg' // BO_local
             ),
 
 
@@ -49,7 +49,7 @@ if (!function_exists('UrlServeurBDD')) {
     function UrlServeurBDD($provenance)
     {   
        
-            return "127.0.0.1:3307";
+            return "127.0.0.1:3306"; // 3307
   
     }
 }

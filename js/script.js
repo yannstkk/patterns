@@ -1,5 +1,3 @@
-
-
 function chargeOnglet(id, bouton) {
     var allOnglet = document.querySelectorAll('.onglet');
     var AllContent = document.querySelectorAll('.contenu');
@@ -93,8 +91,12 @@ function updateCounter(pays) {
     var missing = 0;
 
     for (var i = 0; i < AllSlots.length; i++) {
+        var slotIndex = parseInt(AllSlots[i].getAttribute('data-slot-index'));
         var fileInput = AllSlots[i].querySelector('input[type="file"]');
-        if (fileInput == null || fileInput.files.length == 0) {
+        var hasNewFile    = fileInput && fileInput.files.length > 0;
+        var hasSavedFile  = savedImages[pays] && savedImages[pays][slotIndex];
+
+        if (!hasNewFile && !hasSavedFile) {
             missing++;
         }
     }
@@ -119,6 +121,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var pays = AllSlots[i].closest('.contenu').id;
         if (!countrySlotIndex[pays]) countrySlotIndex[pays] = 0;
         var slotIndex = countrySlotIndex[pays]++;
+
+        // On stocke l'index sur le DOM pour y accéder depuis updateCounter et checkPublishButton
+        AllSlots[i].setAttribute('data-slot-index', slotIndex);
 
         var input = document.createElement('input');
         input.type = 'file';
@@ -178,9 +183,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.querySelector('input[name="nom_projet"]').addEventListener('input', checkPublishButton);
+    document.querySelector('input[name="link"]').addEventListener('input', checkPublishButton);
     document.querySelector('input[name="launching_date"]').addEventListener('change', checkPublishButton);
     document.querySelector('input[name="result_date"]').addEventListener('change', checkPublishButton);
     document.querySelector('input[name="end_date"]').addEventListener('change', checkPublishButton);
+    document.querySelectorAll('.pays-liste input[type="checkbox"]').forEach(function(cb) {
+        cb.addEventListener('change', checkPublishButton);
+    });
+
+    // Initialise les compteurs au chargement (images déjà en session)
+    ['france', 'uk', 'italy', 'spain'].forEach(function(pays) {
+        updateCounter(pays);
+    });
 });
 
 var filtreActif = 'all';
@@ -202,40 +216,50 @@ function appliquerFiltres() {
 }
 
 
-
-
 function checkPublishButton() {
     var statutEl = document.querySelector('input[name="statut_actuel"]');
     if (!statutEl) return;
-    var statut  = statutEl.value;
+    var statut = statutEl.value;
     var btn = document.querySelector('.btn-publish');
-    var checked = document.querySelectorAll('.pays-liste input[type="checkbox"]:checked');
-
-    var firstInput = document.querySelector('.slot-input input[type="file"]');
-    if (!firstInput) return;
+    if (!btn) return;
 
     btn.disabled = true;
     btn.classList.remove('preprod', 'prod');
 
-    if (checked.length === 0) return;
-
-    var nomProjet = document.querySelector('input[name="nom_projet"]').value.trim();
-    var launchingDate = document.querySelector('input[name="launching_date"]').value.trim();
-    var resultDate = document.querySelector('input[name="result_date"]').value.trim();
-    var endDate = document.querySelector('input[name="end_date"]').value.trim();
-
-    if (!nomProjet || !launchingDate || !resultDate || !endDate) return;
-
+    // ── Statut draft : vérification pour autoriser Pre-publish ──
     if (statut === 'draft') {
+
         btn.textContent = 'Pre-publish';
+
+        // 1. Champs texte obligatoires (inclut maintenant "link")
+        var nomProjet    = document.querySelector('input[name="nom_projet"]').value.trim();
+        var link         = document.querySelector('input[name="link"]').value.trim();
+        var launchingDate = document.querySelector('input[name="launching_date"]').value.trim();
+        var resultDate   = document.querySelector('input[name="result_date"]').value.trim();
+        var endDate      = document.querySelector('input[name="end_date"]').value.trim();
+
+        if (!nomProjet || !link || !launchingDate || !resultDate || !endDate) return;
+
+        // 2. Au moins un pays coché
+        var checked = document.querySelectorAll('.pays-liste input[type="checkbox"]:checked');
+        if (checked.length === 0) return;
+
+        // 3. Toutes les images des pays sélectionnés doivent être uploadées
+        //    (nouveau fichier OU déjà sauvegardé en session via savedImages)
         var allFilled = true;
 
         checked.forEach(function(cb) {
-            var contenu = document.getElementById(cb.value);
+            var pays    = cb.value;
+            var contenu = document.getElementById(pays);
             if (!contenu) return;
+
             contenu.querySelectorAll('.slot-input').forEach(function(slot) {
-                var fileInput = slot.querySelector('input[type="file"]');
-                if (!fileInput || fileInput.files.length === 0) {
+                var slotIndex    = parseInt(slot.getAttribute('data-slot-index'));
+                var fileInput    = slot.querySelector('input[type="file"]');
+                var hasNewFile   = fileInput && fileInput.files.length > 0;
+                var hasSavedFile = savedImages[pays] && savedImages[pays][slotIndex];
+
+                if (!hasNewFile && !hasSavedFile) {
                     allFilled = false;
                 }
             });
@@ -246,15 +270,20 @@ function checkPublishButton() {
             btn.classList.add('preprod');
         }
 
+    // ── Statut pre-prod : vérification pour autoriser Publish ──
     } else if (statut === 'pre-prod') {
+
         btn.textContent = 'Publish';
+
+        var checked = document.querySelectorAll('.pays-liste input[type="checkbox"]:checked');
+        if (checked.length === 0) return;
 
         var allChecked = true;
 
         checked.forEach(function(cb) {
             var contenu = document.getElementById(cb.value);
             if (!contenu) return;
-            contenu.querySelectorAll('.slot-input ~ input[type="checkbox"]').forEach(function(chk) {
+            contenu.querySelectorAll('input[type="checkbox"]').forEach(function(chk) {
                 if (!chk.checked) allChecked = false;
             });
         });

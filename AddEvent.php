@@ -17,7 +17,7 @@ $statut = isset($_SESSION["statut"]) ? $_SESSION["statut"] : "draft";
 ];
 
     if (!isset($_SESSION["reponses"])) {
-        $_SESSION["response"] = [];
+        $_SESSION["reponses"] = [];
     }
 
     if (isset($_GET['new'])) {
@@ -29,8 +29,6 @@ $statut = isset($_SESSION["statut"]) ? $_SESSION["statut"] : "draft";
     header("location: index.php?page=AddEvent");
     exit;
 }
-
-//var_dump(getListEvent());
 
 ?>
 
@@ -61,82 +59,88 @@ $statut = isset($_SESSION["statut"]) ? $_SESSION["statut"] : "draft";
         <h2>Event information :</h2>
 
         <div class="ligne">
-            <label class = "<?= isset($_SESSION["errors"]["nom_projet"]) ? "error" : "";  ?>"   >Project name :</label >
-            <input  class = "<?= isset($_SESSION["errors"]["nom_projet"]) ? "error" : "";  ?>" type="text" name="nom_projet" value = "<?=
-            isset($_SESSION["reponses"]["nom_projet"]) ? $_SESSION["reponses"]["nom_projet"] : ""; ?>">
-        
+            <label class="<?= isset($_SESSION["errors"]["nom_projet"]) ? "error" : "" ?>">Project name :</label>
+            <input class="<?= isset($_SESSION["errors"]["nom_projet"]) ? "error" : "" ?>" type="text" name="nom_projet" value="<?=
+                isset($_SESSION["reponses"]["nom_projet"]) ? htmlspecialchars($_SESSION["reponses"]["nom_projet"]) : "" ?>">
+            <?php if (isset($_SESSION["errors"]["nom_projet"])): ?>
+                <span class="error"><?= $_SESSION["errors"]["nom_projet"] ?></span>
+            <?php endif; ?>
         </div>
 
         <div class="ligne">
             <label>Event type :</label>
-            <select name="type_event">
+            <select name="type_event" <?= $statut === 'prod' ? 'disabled' : '' ?>>
                 <option>Fun Month</option>
                 <option>Donnation</option>
             </select>
         </div>
     
         <div class="ligne">
-            <label>Event link :</label>
-            <input type="text" name="link" style="width:300px" value = "<?=
-            isset($_SESSION["reponses"]["link"]) ? $_SESSION["reponses"]["link"] : "event.misgroup.io/....."; ?>">
+            <label class="<?= isset($_SESSION["errors"]["link"]) ? "error" : "" ?>">Event link :</label>
+            <input type="text" name="link" style="width:300px"
+                class="<?= isset($_SESSION["errors"]["link"]) ? "error" : "" ?>"
+                value="<?= isset($_SESSION["reponses"]["link"]) ? htmlspecialchars($_SESSION["reponses"]["link"]) : "event.misgroup.io/....." ?>">
+            <?php if (isset($_SESSION["errors"]["link"])): ?>
+                <span class="error"><?= $_SESSION["errors"]["link"] ?></span>
+            <?php endif; ?>
         </div>
 
         <div class="ligne">
-            <label class = "<?= isset($_SESSION["errors"]["launching_date"]) ? "error" : "";  ?>" >Event launch :</label>
-            <input class = "<?= isset($_SESSION["errors"]["launching_date"]) ? "error" : "";  ?>" type="date" name="launching_date" value = "<?=
-            isset($_SESSION["reponses"]["launching_date"]) ? $_SESSION["reponses"]["launching_date"] : ""; ?>">
-            <?php if (isset($_SESSION["errors"]["launching_date"]) ) { ?>
-            <span class = "error"> <?= $_SESSION["errors"]["launching_date"] ?>  </span>  
-             <?php   } ?>
+            <label class="<?= isset($_SESSION["errors"]["launching_date"]) ? "error" : "" ?>">Event launch :</label>
+            <input class="<?= isset($_SESSION["errors"]["launching_date"]) ? "error" : "" ?>" type="date" name="launching_date" value="<?=
+                isset($_SESSION["reponses"]["launching_date"]) ? $_SESSION["reponses"]["launching_date"] : "" ?>">
+            <?php if (isset($_SESSION["errors"]["launching_date"])): ?>
+                <span class="error"><?= $_SESSION["errors"]["launching_date"] ?></span>
+            <?php endif; ?>
         </div>
         
         <div class="ligne">
-            <label class = "<?= isset($_SESSION["errors"]["result_date"]) ? "error" : "";  ?>" >Display results :</label>
-            <input class = "<?= isset($_SESSION["errors"]["result_date"]) ? "error" : "";  ?>" type="date" name="result_date" value = "<?=
-            isset($_SESSION["reponses"]["result_date"]) ? $_SESSION["reponses"]["result_date"] : ""; ?>">
-            <?php if (isset($_SESSION["errors"]["result_date"]) ) { ?>
-            <span class = "error"> <?= $_SESSION["errors"]["result_date"] ?>  </span>  
-             <?php   } ?>
-            
+            <label class="<?= isset($_SESSION["errors"]["result_date"]) ? "error" : "" ?>">Display results :</label>
+            <input class="<?= isset($_SESSION["errors"]["result_date"]) ? "error" : "" ?>" type="date" name="result_date" value="<?=
+                isset($_SESSION["reponses"]["result_date"]) ? $_SESSION["reponses"]["result_date"] : "" ?>">
+            <?php if (isset($_SESSION["errors"]["result_date"])): ?>
+                <span class="error"><?= $_SESSION["errors"]["result_date"] ?></span>
+            <?php endif; ?>
         </div>
 
         <div class="ligne">
-            <label class = "<?= isset($_SESSION["errors"]["end_date"]) ? "error" : "";  ?>" >Event end :</label>
-            <input class = "<?= isset($_SESSION["errors"]["end_date"]) ? "error" : "";  ?>" type="date" name="end_date" value = "<?=
-            isset($_SESSION["reponses"]["end_date"]) ? $_SESSION["reponses"]["end_date"] : ""; ?>">
-            <?php if (isset($_SESSION["errors"]["end_date"]) ) { ?>
-            <span class = "error"> <?= $_SESSION["errors"]["end_date"] ?>  </span>  
-             <?php   } ?>
+            <label class="<?= isset($_SESSION["errors"]["end_date"]) ? "error" : "" ?>">Event end :</label>
+            <input class="<?= isset($_SESSION["errors"]["end_date"]) ? "error" : "" ?>" type="date" name="end_date" value="<?=
+                isset($_SESSION["reponses"]["end_date"]) ? $_SESSION["reponses"]["end_date"] : "" ?>">
+            <?php if (isset($_SESSION["errors"]["end_date"])): ?>
+                <span class="error"><?= $_SESSION["errors"]["end_date"] ?></span>
+            <?php endif; ?>
         </div>
  
 
         <div class="ligne">
-            <label class = "<?= isset($_SESSION["errors"]["pays_list[]"]) ? "error" : "";  ?>" >Country :</label>
-            <div class="pays-liste" >
+            <label class="<?= isset($_SESSION["errors"]["pays_list[]"]) ? "error" : "" ?>">Country :</label>
+            <div class="pays-liste">
                 <label><input type="checkbox" value="france" name="pays_list[]" onchange="updateOnglets()"
-                    <?= isset($_SESSION["reponses"]["pays_list"]) && in_array("france", $_SESSION["reponses"]["pays_list"]) ? "checked" : "" ?>>
+                    <?= isset($_SESSION["reponses"]["pays_list"]) && in_array("france", $_SESSION["reponses"]["pays_list"]) ? "checked" : "" ?>
+                    <?= $statut === 'prod' ? 'disabled' : '' ?>>
                     France</label>
 
                 <label><input type="checkbox" value="uk" name="pays_list[]" onchange="updateOnglets()"
-                    <?= isset($_SESSION["reponses"]["pays_list"]) && in_array("uk", $_SESSION["reponses"]["pays_list"]) ? "checked" : "" ?>>
+                    <?= isset($_SESSION["reponses"]["pays_list"]) && in_array("uk", $_SESSION["reponses"]["pays_list"]) ? "checked" : "" ?>
+                    <?= $statut === 'prod' ? 'disabled' : '' ?>>
                     UK</label>
 
                 <label><input type="checkbox" value="italy" name="pays_list[]" onchange="updateOnglets()"
-                    <?= isset($_SESSION["reponses"]["pays_list"]) && in_array("italy", $_SESSION["reponses"]["pays_list"]) ? "checked" : "" ?>>
+                    <?= isset($_SESSION["reponses"]["pays_list"]) && in_array("italy", $_SESSION["reponses"]["pays_list"]) ? "checked" : "" ?>
+                    <?= $statut === 'prod' ? 'disabled' : '' ?>>
                     Italy</label>
 
                 <label><input type="checkbox" value="spain" name="pays_list[]" onchange="updateOnglets()"
-                    <?= isset($_SESSION["reponses"]["pays_list"]) && in_array("spain", $_SESSION["reponses"]["pays_list"]) ? "checked" : "" ?>>
+                    <?= isset($_SESSION["reponses"]["pays_list"]) && in_array("spain", $_SESSION["reponses"]["pays_list"]) ? "checked" : "" ?>
+                    <?= $statut === 'prod' ? 'disabled' : '' ?>>
                     Spain</label>
             </div>
         </div>
 
-
-         <?php if (isset($_SESSION["errors"]["pays_list[]"])): ?>
+        <?php if (isset($_SESSION["errors"]["pays_list[]"])): ?>
             <span class="error"><?= $_SESSION["errors"]["pays_list[]"] ?></span>
         <?php endif; ?>
-
-
 
 
         <div class="ligne">
@@ -145,12 +149,9 @@ $statut = isset($_SESSION["statut"]) ? $_SESSION["statut"] : "draft";
         </div>
 
 
-        <?php if (!empty($_SESSION["errors"])){ ?>
-
-          
-        <span class = "error" > some input(s) are empty </span>  
-
-        <?php } ?>
+        <?php if (!empty($_SESSION["errors"])): ?>
+            <span class="error">Some input(s) are empty or invalid</span>
+        <?php endif; ?>
 
         <br>
         <hr>
@@ -347,10 +348,6 @@ $statut = isset($_SESSION["statut"]) ? $_SESSION["statut"] : "draft";
             <div class="contenu" id="italy"></div>
 
 
-
-
-
-
             <div class="contenu" id="spain">
 
             <h3>Affichage principal</h3>
@@ -386,20 +383,19 @@ $statut = isset($_SESSION["statut"]) ? $_SESSION["statut"] : "draft";
             </div>
         </div>
 
-
-
         </div>
 
         <div class="boutons">
-            <button type="submit" name="action" value="save" class="btn-save"
-                <?= $statut == 'prod' ? 'disabled' : '' ?>>
+            <button type="submit" name="action" value="save" class="btn-save">
                 Save
             </button>
 
+            <?php if ($statut !== 'prod'): ?>
             <button type="submit" name="action" value="pre-publish" class="btn-publish"
                 <?= $statut != 'draft' ? 'disabled' : '' ?>>
                 <?= $statut === 'pre-prod' ? 'Publish' : 'Pre-publish' ?>
             </button>
+            <?php endif; ?>
 
             <a href="./reset.php" style="font-size:11px; color:#999;">Reset session</a> 
 
