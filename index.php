@@ -1,12 +1,11 @@
 <?php
-//index.php
-$page = isset($_GET['page']) ? $_GET['page'] : 'AddEvent';
+// index.php
+$page = isset($_GET['page']) ? $_GET['page'] : 'ListEvent';
 
-$pages_autorisees = ['AddEvent'];
-
+$pages_autorisees = ['AddEvent', 'ListEvent'];
 
 if (!in_array($page, $pages_autorisees)) {
-    $page = 'AddEvent';
+    $page = 'ListEvent';
 }
 
-include($page . '.php');
+include($page.'.php');

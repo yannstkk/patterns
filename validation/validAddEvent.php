@@ -4,13 +4,24 @@ session_start();
 
 include_once __DIR__ . '/../model/event.php';
 
+$action       = $_POST['action']        ?? '';
+$statutActuel = $_POST['statut_actuel'] ?? 'draft';
+$eventId      = $_SESSION['event_id']   ?? null;
+
+if ($action === 'pre-publish' && $eventId) {
+    $nouvelEtat = $statutActuel === 'draft' ? 'pre-prod' : ($statutActuel === 'pre-prod' ? 'prod' : $statutActuel);
+    $cnx->prepare("UPDATE config_event SET etat_event = :etat WHERE ID = :id")
+        ->execute([':etat' => $nouvelEtat, ':id' => (int)$eventId]);
+    $_SESSION['statut'] = $nouvelEtat;
+    header('Location: ../index.php?page=AddEvent');
+    exit;
+}
+
 $_SESSION["reponses"] = $_POST;
 $_SESSION["errors"]   = [];
 $errors = [];
 
-// ──────────────────────────────────────────────
-// 1. Champs obligatoires avec messages dédiés
-// ──────────────────────────────────────────────
+$isExisting = !empty($_SESSION['event_id']);
 
 $champsObligatoires = [
     'nom_projet'     => 'The project name is required',
@@ -25,10 +36,6 @@ foreach ($champsObligatoires as $champ => $message) {
         $errors[$champ] = $message;
     }
 }
-
-// ──────────────────────────────────────────────
-// 2. Validation des dates (seulement si remplies)
-// ──────────────────────────────────────────────
 
 $launchingDate = trim($_POST['launching_date'] ?? '');
 $resultDate    = trim($_POST['result_date']    ?? '');
@@ -55,7 +62,7 @@ if (empty($errors['launching_date']) && empty($errors['result_date']) && empty($
         $today = new DateTime();
         $today->setTime(0, 0, 0);
 
-        if ($formatLaunch < $today) {
+        if (!$isExisting && $formatLaunch < $today) {
             $errors['launching_date'] = "The launch date can't be before today";
         }
 
@@ -69,17 +76,9 @@ if (empty($errors['launching_date']) && empty($errors['result_date']) && empty($
     }
 }
 
-// ──────────────────────────────────────────────
-// 3. Au moins un pays sélectionné
-// ──────────────────────────────────────────────
-
-if (empty($_POST['pays_list'])) {
+if (empty($_POST['pays_list']) && !$isExisting) {
     $errors['pays_list[]'] = 'At least one country must be selected';
 }
-
-// ──────────────────────────────────────────────
-// 4. Upload des images (avec vérif MIME réelle)
-// ──────────────────────────────────────────────
 
 if (!isset($_SESSION['images'])) {
     $_SESSION['images'] = [];
@@ -99,7 +98,6 @@ if (isset($_FILES['images'])) {
             if ($errCode === UPLOAD_ERR_OK) {
 
                 $tmpPath  = $_FILES['images']['tmp_name'][$pays][$index];
-
                 $finfo    = new finfo(FILEINFO_MIME_TYPE);
                 $mimeType = $finfo->file($tmpPath);
 
@@ -117,46 +115,23 @@ if (isset($_FILES['images'])) {
     }
 }
 
-// ──────────────────────────────────────────────
-// 5. Sauvegarde en base + changement de statut
-//    (seulement si aucune erreur)
-// ──────────────────────────────────────────────
-
 if (empty($errors)) {
 
-    $action       = $_POST['action']        ?? '';
-    $statutActuel = $_POST['statut_actuel'] ?? 'draft';
-
-    // Calcul du nouvel état
     $nouvelEtat = $statutActuel;
-    if ($action === 'pre-publish') {
-        if ($statutActuel === 'draft') {
-            $nouvelEtat = 'pre-prod';
-        } elseif ($statutActuel === 'pre-prod') {
-            $nouvelEtat = 'prod';
-        }
-    }
 
-    // Sauvegarde en base de données (avec le bon état)
-    $eventId = $_SESSION['event_id'] ?? null;
     $id = saveEvent($_POST, $eventId, $nouvelEtat);
     if ($id) {
         $_SESSION['event_id'] = $id;
     }
 
-    // Mise à jour de la session statut
     $_SESSION['statut'] = $nouvelEtat;
 }
-
-// ──────────────────────────────────────────────
-// 6. Redirection
-// ──────────────────────────────────────────────
 
 $_SESSION['errors'] = $errors;
 
 if (!empty($errors)) {
     header('Location: ' . $_SERVER['HTTP_REFERER']);
 } else {
-    header('Location: ../index.php?page=ListEvent');
+    header('Location: ../index.php?page=AddEvent');
 }
 exit;
