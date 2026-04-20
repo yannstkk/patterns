@@ -3,18 +3,20 @@ session_start();
 include_once __DIR__ . '/model/event.php';
 
 if (isset($_GET['new'])) {
-    $_SESSION['reponses']  = [];
-    $_SESSION['errors']    = [];
-    $_SESSION['statut']    = 'draft';
-    $_SESSION['event_id']  = null;
-    $_SESSION['images']    = [];
+    $_SESSION['reponses'] = [];
+    $_SESSION['errors'] = [];
+    $_SESSION['statut'] = 'draft';
+    $_SESSION['event_id'] = null;
+    $_SESSION['images'] = [];
+    $_SESSION['is_edit'] = false;
+    unset($_SESSION['step']);
     header('Location: index.php?page=AddEvent');
     exit;
 }
 
 if (isset($_GET['edit'])) {
-    $editId    = (int)$_GET['edit'];
-    $stmt      = $cnx->prepare("SELECT * FROM config_event WHERE ID = :id LIMIT 1");
+    $editId = (int)$_GET['edit'];
+    $stmt = $cnx->prepare("SELECT * FROM config_event WHERE ID = :id LIMIT 1");
     $stmt->execute([':id' => $editId]);
     $eventData = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -32,16 +34,18 @@ if (isset($_GET['edit'])) {
         $pays = array_unique($pays);
 
         $_SESSION['event_id'] = $editId;
-        $_SESSION['statut']   = $eventData['etat_event'] ?? 'draft';
-        $_SESSION['errors']   = [];
+        $_SESSION['statut'] = $eventData['etat_event'] ?? 'draft';
+        $_SESSION['errors'] = [];
+        $_SESSION['is_edit'] = true;
+        unset($_SESSION['step']);
         $_SESSION['reponses'] = [
-            'nom_projet'     => $eventData['titre']          ?? '',
-            'type_event'     => $eventData['type_event']     ?? '',
-            'link'           => $eventData['supplement_url'] ?? '',
-            'launching_date' => !empty($eventData['date_debut'])   ? date('Y-m-d', strtotime($eventData['date_debut']))  : '',
-            'result_date'    => !empty($eventData['date_winner'])   ? date('Y-m-d', strtotime($eventData['date_winner'])) : '',
-            'end_date'       => !empty($eventData['date_fin'])      ? date('Y-m-d', strtotime($eventData['date_fin']))    : '',
-            'pays_list'      => $pays,
+            'nom_projet' => $eventData['titre'] ?? '',
+            'type_event' => $eventData['type_event'] ?? '',
+            'link' => $eventData['supplement_url'] ?? '',
+            'launching_date' => !empty($eventData['date_debut']) ? date('Y-m-d', strtotime($eventData['date_debut'])) : '',
+            'result_date' => !empty($eventData['date_winner']) ? date('Y-m-d', strtotime($eventData['date_winner'])) : '',
+            'end_date' => !empty($eventData['date_fin']) ? date('Y-m-d', strtotime($eventData['date_fin'])) : '',
+            'pays_list' => $pays,
         ];
 
         $_SESSION['images'] = [];
@@ -49,8 +53,8 @@ if (isset($_GET['edit'])) {
             $stmtImg = $cnx->prepare("SELECT slot_key, filename FROM image_event WHERE event_id = :id");
             $stmtImg->execute([':id' => $editId]);
             foreach ($stmtImg->fetchAll(PDO::FETCH_ASSOC) as $img) {
-                $parts    = explode('_', $img['slot_key'], 2);
-                $imgPays  = $parts[0];
+                $parts = explode('_', $img['slot_key'], 2);
+                $imgPays = $parts[0];
                 $imgIndex = isset($parts[1]) ? (int)$parts[1] : 0;
                 $_SESSION['images'][$imgPays][$imgIndex] = $img['filename'];
             }
@@ -58,14 +62,29 @@ if (isset($_GET['edit'])) {
     }
 }
 
-$statut   = $_SESSION['statut']   ?? 'draft';
-$rep      = $_SESSION['reponses'] ?? [];
-$errors   = $_SESSION['errors']   ?? [];
+$statut = $_SESSION['statut'] ?? 'draft';
+$rep = $_SESSION['reponses'] ?? [];
+$errors = $_SESSION['errors'] ?? [];
+$eventId = $_SESSION['event_id'] ?? null;
+
+if (!empty($errors) && isset($_SESSION['step'])) {
+    $step = (int)$_SESSION['step'];
+} else {
+    $step = 1;
+    if ($eventId) {
+        $step = 2;
+        if (!empty($rep['link']) && !empty($rep['launching_date']) && !empty($rep['result_date']) && !empty($rep['end_date'])) {
+            $step = 3;
+        }
+    }
+}
 
 $paysList = $rep['pays_list'] ?? [];
-$hFR  = in_array('france', $paysList) ? '' : 'style="display:none"';
-$hUK  = in_array('uk',     $paysList) ? '' : 'style="display:none"';
+$hFR = in_array('france', $paysList) ? '' : 'style="display:none"';
+$hUK = in_array('uk', $paysList) ? '' : 'style="display:none"';
 $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
+
+$saveBtnDisabled = in_array($statut, ['pre-prod', 'prod']) ? 'disabled' : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -88,6 +107,7 @@ $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
 
     <form method="POST" action="./validation/validAddEvent.php" enctype="multipart/form-data">
         <input type="hidden" name="statut_actuel" value="<?= $statut ?>">
+        <input type="hidden" name="step" value="<?= $step ?>">
 
         <h2>Event information :</h2>
 
@@ -112,6 +132,13 @@ $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
             </select>
         </div>
 
+        <?php if ($step === 1): ?>
+        <div class="boutons" style="margin-top:16px;">
+            <button type="submit" name="action" value="save" class="btn-save">Save</button>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($step >= 2): ?>
         <div class="ligne">
             <label class="<?= isset($errors['link']) ? 'error' : '' ?>">Event link :</label>
             <input type="text" name="link" style="width:300px"
@@ -156,12 +183,27 @@ $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
             <label><input type="checkbox"> Enable an internal version of the event</label>
         </div>
 
+        <?php if (!empty($errors)): ?>
+            <span class="error">Some input(s) are empty or invalid</span>
+        <?php endif; ?>
+        <?php if (isset($errors['images'])): ?>
+            <span class="error"><?= $errors['images'] ?></span>
+        <?php endif; ?>
+
+        <?php if ($step === 2): ?>
+        <div class="boutons" style="margin-top:16px;">
+            <button type="submit" name="action" value="save" class="btn-save">Save</button>
+        </div>
+        <?php endif; ?>
+        <?php endif; ?>
+
+        <?php if ($step >= 3): ?>
         <br><hr>
 
         <div class="ligne">
             <label class="<?= isset($errors['pays_list[]']) ? 'error' : '' ?>">Country :</label>
             <div class="pays-liste">
-                <?php foreach (['france'=>'France','uk'=>'UK','italy'=>'Italy','others'=>'Others'] as $val=>$label): ?>
+                <?php foreach (['france' => 'France', 'uk' => 'UK', 'italy' => 'Italy', 'others' => 'Others'] as $val => $label): ?>
                 <label>
                     <input type="checkbox" value="<?= $val ?>" name="pays_list[]" onchange="updateOnglets()"
                         <?= in_array($val, $rep['pays_list'] ?? []) ? 'checked' : '' ?>
@@ -173,10 +215,6 @@ $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
         </div>
         <?php if (isset($errors['pays_list[]'])): ?>
             <span class="error"><?= $errors['pays_list[]'] ?></span>
-        <?php endif; ?>
-
-        <?php if (!empty($errors)): ?>
-            <span class="error">Some input(s) are empty or invalid</span>
         <?php endif; ?>
 
         <div class="bloc-banniere">
@@ -200,7 +238,6 @@ $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
 
             <p id="message-aucun-pays" style="color:#999;font-style:italic;">Please select at least one country</p>
 
-            <!-- ═══ FRENCH ═══ -->
             <div class="contenu" id="france">
                 <h3>Main display</h3>
                 <div class="grille">
@@ -258,7 +295,6 @@ $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
                 </div>
             </div>
 
-            <!-- ═══ ENGLISH ═══ -->
             <div class="contenu" id="uk">
                 <h3>Main display</h3>
                 <div class="grille">
@@ -304,35 +340,33 @@ $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
                 </div>
             </div>
 
-            <!-- ═══ ITALIAN ═══ -->
             <div class="contenu" id="italy"></div>
 
-            <!-- ═══ SPANISH — Others only ═══ -->
             <div class="contenu" id="spain">
                 <h3>Main display</h3>
                 <div class="grille">
-                    <div class="slot"><div class="slot-label">FCT ? x ? (Deco &amp; CO) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (Deco &amp; CO) <span class="icon-interrogation">?</span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot"><div class="slot-label">TRY (Taille à def) (CO &amp; Deco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (CO &amp; Deco) <span class="icon-interrogation">?</span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot"><div class="slot-label">RS 455x184 (Deco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (Deco) <span class="icon-interrogation">?</span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot"><div class="slot-label">RS 455x184 (Co) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (Co) <span class="icon-interrogation">?</span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot"><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?</span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
                 <h3>Display results</h3>
                 <div class="grille">
-                    <div class="slot"><div class="slot-label">FCT ? x ? (Deco &amp; CO) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (Deco &amp; CO) <span class="icon-interrogation">?</span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot"><div class="slot-label">TRY (Taille à def) (CO &amp; Deco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (CO &amp; Deco) <span class="icon-interrogation">?</span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot"><div class="slot-label">RS 455x184 (Deco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (Deco) <span class="icon-interrogation">?</span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot"><div class="slot-label">RS 455x184 (Co) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (Co) <span class="icon-interrogation">?</span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot"><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?</span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
             </div>
@@ -340,21 +374,21 @@ $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
         </div>
 
         <div class="boutons">
-            <button type="submit" name="action" value="save" class="btn-save">Save</button>
+            <button type="submit" name="action" value="save" class="btn-save" <?= $saveBtnDisabled ?>>Save</button>
             <?php if ($statut !== 'prod'): ?>
-            <button type="submit" name="action" value="pre-publish" class="btn-publish"
-                <?= $statut === 'pre-prod' ? 'disabled' : '' ?>>
+            <button type="submit" name="action" value="pre-publish" class="btn-publish" disabled>
                 <?= $statut === 'pre-prod' ? 'Publish' : 'Pre-publish' ?>
             </button>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
 
     </form>
 </div>
 
 <script>
     var savedImages = <?= json_encode($_SESSION['images'] ?? []) ?>;
-    var eventId     = <?= json_encode($_SESSION['event_id'] ?? null) ?>;
+    var eventId = <?= json_encode($_SESSION['event_id'] ?? null) ?>;
 </script>
 <script src="./js/script.js"></script>
 </body>

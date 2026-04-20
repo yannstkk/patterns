@@ -25,15 +25,17 @@ function saveEvent(array $data, $eventId = null, $etat = 'draft') {
     $langue = implode(',', array_unique($codes));
 
     $params = [
-        ':titre'          => $data['nom_projet'],
-        ':type_event'     => $data['type_event'],
+        ':titre' => $data['nom_projet'],
+        ':type_event' => $data['type_event'],
         ':supplement_url' => $data['link'],
-        ':date_debut'     => $data['launching_date'],
-        ':date_winner'    => $data['result_date'],
-        ':date_fin'       => $data['end_date'],
-        ':langue'         => $langue,
-        ':etat_event'     => $etat,
+        ':date_debut' => !empty($data['launching_date']) ? $data['launching_date'] : null,
+        ':date_winner' => !empty($data['result_date']) ? $data['result_date'] : null,
+        ':date_fin' => !empty($data['end_date']) ? $data['end_date'] : null,
+        ':langue' => $langue,
+        ':etat_event' => $etat,
     ];
+
+
 
     try {
         if ($eventId) {

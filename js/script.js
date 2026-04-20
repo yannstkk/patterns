@@ -14,8 +14,8 @@ function getChecked() {
     };
     return {
         france: !!(cb.france && cb.france.checked),
-        uk:     !!(cb.uk     && cb.uk.checked),
-        italy:  !!(cb.italy  && cb.italy.checked),
+        uk: !!(cb.uk     && cb.uk.checked),
+        italy: !!(cb.italy  && cb.italy.checked),
         others: !!(cb.others && cb.others.checked)
     };
 }
@@ -51,7 +51,7 @@ function updateOnglets() {
     updateSlotSources();
 
     toggleOnglet('france', c.france || c.others);
-    toggleOnglet('uk',     c.uk     || c.others);
+    toggleOnglet('uk', c.uk || c.others);
     toggleOnglet('italy',  c.italy);
     toggleOnglet('spain',  c.others);
 
@@ -61,7 +61,7 @@ function updateOnglets() {
     var actif = document.querySelector('.onglet.actif');
     var actifOk = actif && actif.style.display !== 'none';
     if (!actifOk) {
-        var premiers = ['france','uk','italy','spain'];
+        var premiers = ['france', 'uk', 'italy', 'spain'];
         for (var i = 0; i < premiers.length; i++) {
             var o = document.getElementById('onglet-' + premiers[i]);
             if (o && o.style.display !== 'none') {
@@ -75,16 +75,91 @@ function updateOnglets() {
 }
 
 function isSlotRequired(slotInput) {
-    var c      = getChecked();
+    var c= getChecked();
     var slotEl = slotInput.closest ? slotInput.closest('.slot') : null;
-    if (!slotEl) return true;
+    if (!slotEl) return false;
     var src = slotEl.getAttribute('data-source');
-    if (!src) return true;
+    if (!src) return false;
     if (src === 'france') return c.france;
     if (src === 'uk')     return c.uk;
     if (src === 'others') return c.others;
     if (src === 'italy')  return c.italy;
+    return false;
+}
+
+function getRequiredSlots() {
+    var c = getChecked();
+    var required = {};
+    var i;
+
+    if (c.france) {
+        required['france'] = required['france'] || [];
+        for (i = 0; i <= 6; i++)  required['france'].push(i);
+        for (i = 12; i <= 18; i++) required['france'].push(i);
+    }
+
+    if (c.uk) {
+        required['uk'] = [];
+        for (i = 0; i <= 17; i++) required['uk'].push(i);
+    }
+
+    if (c.others) {
+        required['france'] = required['france'] || [];
+        for (i = 7; i <= 11; i++)  required['france'].push(i);
+        for (i = 19; i <= 23; i++) required['france'].push(i);
+        required['spain'] = [];
+        for (i = 0; i <= 9; i++) required['spain'].push(i);
+    }
+
+    return required;
+}
+
+function eventInfoFilled() {
+    var nom    = document.querySelector('input[name="nom_projet"]');
+    var link   = document.querySelector('input[name="link"]');
+    var launch = document.querySelector('input[name="launching_date"]');
+    var result = document.querySelector('input[name="result_date"]');
+    var end    = document.querySelector('input[name="end_date"]');
+
+    if (!nom || !nom.value.trim()) return false;
+    if (link   && !link.value.trim())   return false;
+    if (launch && !launch.value.trim()) return false;
+    if (result && !result.value.trim()) return false;
+    if (end    && !end.value.trim())    return false;
     return true;
+}
+
+function countrySelected() {
+    var c = getChecked();
+    return c.france || c.uk || c.italy || c.others;
+}
+
+function allImagesFilled() {
+    var c = getChecked();
+    if (!c.france && !c.uk && !c.italy && !c.others) return false;
+
+    var required = getRequiredSlots();
+
+    for (var pays in required) {
+        var indices = required[pays];
+        for (var i = 0; i < indices.length; i++) {
+            var idx = indices[i];
+            var hasSaved = savedImages[pays] && savedImages[pays][idx] !== undefined;
+            if (!hasSaved) return false;
+        }
+    }
+    return true;
+}
+
+function setBtn(btn, enabled, extraClass) {
+    if (!btn) return;
+    btn.disabled      = !enabled;
+    btn.style.opacity = enabled ? '1' : '0.4';
+    btn.style.cursor  = enabled ? 'pointer' : 'not-allowed';
+    if (extraClass !== undefined) {
+        btn.classList.remove('preprod', 'prod');
+        if (enabled) btn.classList.add(extraClass);
+    }
 }
 
 function checkImageDimension(file, slot, pays, slotIndex) {
@@ -155,10 +230,10 @@ function updateCounter(pays) {
     var missing = 0;
     contenu.querySelectorAll('.slot-input').forEach(function(slot) {
         if (!isSlotRequired(slot)) return;
-        var idx          = parseInt(slot.getAttribute('data-slot-index'));
-        var fileInput    = slot.querySelector('input[type="file"]');
+        var idx = parseInt(slot.getAttribute('data-slot-index'));
+        var fileInput = slot.querySelector('input[type="file"]');
         var hasNewFile   = fileInput && fileInput.files.length > 0;
-        var hasSavedFile = savedImages[pays] && savedImages[pays][idx];
+        var hasSavedFile = savedImages[pays] && savedImages[pays][idx] !== undefined;
         if (!hasNewFile && !hasSavedFile) missing++;
     });
     var counter = document.getElementById('compteur-' + pays);
@@ -168,8 +243,8 @@ function updateCounter(pays) {
 
 document.addEventListener('DOMContentLoaded', function() {
 
-    var allSlots         = document.querySelectorAll('.slot-input');
-    var statut           = document.querySelector('input[name="statut_actuel"]').value;
+    var allSlots = document.querySelectorAll('.slot-input');
+    var statut = document.querySelector('input[name="statut_actuel"]').value;
     var countrySlotIndex = {};
 
     allSlots.forEach(function(slot) {
@@ -179,31 +254,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
         slot.setAttribute('data-slot-index', slotIndex);
 
-        if (savedImages[pays] && savedImages[pays][slotIndex]) {
+        if (savedImages[pays] && savedImages[pays][slotIndex] !== undefined) {
             var span = slot.querySelector('span');
             span.textContent = savedImages[pays][slotIndex];
             span.style.color = '#2e7d32';
         }
 
-        var input         = document.createElement('input');
-        input.type        = 'file';
-        input.accept      = 'image/png';
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/png';
         input.style.display = 'none';
         slot.appendChild(input);
         slot.style.cursor = 'pointer';
-        slot.style.flex   = '1';
+        slot.style.flex = '1';
 
-        var checkbox              = document.createElement('input');
-        checkbox.type             = 'checkbox';
-        checkbox.style.cursor     = 'pointer';
+        var checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.style.cursor = 'pointer';
         checkbox.style.flexShrink = '0';
         checkbox.addEventListener('change', checkPublishButton);
 
-        var wrapper              = document.createElement('div');
-        wrapper.style.display    = 'flex';
+        var wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
         wrapper.style.alignItems = 'center';
-        wrapper.style.gap        = '6px';
-        wrapper.style.width      = '100%';
+        wrapper.style.gap = '6px';
+        wrapper.style.width = '100%';
 
         slot.parentElement.insertBefore(wrapper, slot);
         wrapper.appendChild(slot);
@@ -229,11 +304,18 @@ document.addEventListener('DOMContentLoaded', function() {
         })(slot, pays, slotIndex);
     });
 
-    document.querySelector('input[name="nom_projet"]').addEventListener('input', checkPublishButton);
-    document.querySelector('input[name="link"]').addEventListener('input', checkPublishButton);
-    document.querySelector('input[name="launching_date"]').addEventListener('change', checkPublishButton);
-    document.querySelector('input[name="result_date"]').addEventListener('change', checkPublishButton);
-    document.querySelector('input[name="end_date"]').addEventListener('change', checkPublishButton);
+    var nomInput    = document.querySelector('input[name="nom_projet"]');
+    var linkInput   = document.querySelector('input[name="link"]');
+    var launchInput = document.querySelector('input[name="launching_date"]');
+    var resultInput = document.querySelector('input[name="result_date"]');
+    var endInput    = document.querySelector('input[name="end_date"]');
+
+    if (nomInput)    nomInput.addEventListener('input', checkPublishButton);
+    if (linkInput)   linkInput.addEventListener('input', checkPublishButton);
+    if (launchInput) launchInput.addEventListener('change', checkPublishButton);
+    if (resultInput) resultInput.addEventListener('change', checkPublishButton);
+    if (endInput)    endInput.addEventListener('change', checkPublishButton);
+
     document.querySelectorAll('.pays-liste input[type="checkbox"]').forEach(function(cb) {
         cb.addEventListener('change', checkPublishButton);
     });
@@ -264,60 +346,34 @@ function appliquerFiltres() {
 function checkPublishButton() {
     var statutEl = document.querySelector('input[name="statut_actuel"]');
     if (!statutEl) return;
-    var statut = statutEl.value;
-    var btn    = document.querySelector('.btn-publish');
-    if (!btn) return;
+    var statut  = statutEl.value;
+    var btnSave = document.querySelector('.btn-save');
+    var btnPub  = document.querySelector('.btn-publish');
 
-    btn.disabled = true;
-    btn.classList.remove('preprod', 'prod');
+    var infoOk    = eventInfoFilled();
+    var countryOk = countrySelected();
+    var imagesOk  = allImagesFilled();
+    var baseOk    = infoOk && countryOk && imagesOk;
 
     if (statut === 'draft') {
-        btn.textContent = 'Pre-publish';
-
-        var nomProjet     = document.querySelector('input[name="nom_projet"]').value.trim();
-        var link          = document.querySelector('input[name="link"]').value.trim();
-        var launchingDate = document.querySelector('input[name="launching_date"]').value.trim();
-        var resultDate    = document.querySelector('input[name="result_date"]').value.trim();
-        var endDate       = document.querySelector('input[name="end_date"]').value.trim();
-        if (!nomProjet || !link || !launchingDate || !resultDate || !endDate) return;
-
-        var c = getChecked();
-        if (!c.france && !c.uk && !c.italy && !c.others) return;
-
-        var tabsToCheck = [];
-        if (c.france || c.others) tabsToCheck.push('france');
-        if (c.uk     || c.others) tabsToCheck.push('uk');
-        if (c.italy)              tabsToCheck.push('italy');
-        if (c.others)             tabsToCheck.push('spain');
-
-        var allFilled = true;
-        tabsToCheck.forEach(function(pays) {
-            var contenu = document.getElementById(pays);
-            if (!contenu) return;
-            contenu.querySelectorAll('.slot-input').forEach(function(slot) {
-                if (!isSlotRequired(slot)) return;
-                var idx          = parseInt(slot.getAttribute('data-slot-index'));
-                var fileInput    = slot.querySelector('input[type="file"]');
-                var hasNewFile   = fileInput && fileInput.files.length > 0;
-                var hasSavedFile = savedImages[pays] && savedImages[pays][idx];
-                if (!hasNewFile && !hasSavedFile) allFilled = false;
-            });
-        });
-
-        if (allFilled) {
-            btn.disabled = false;
-            btn.classList.add('preprod');
+        setBtn(btnSave, true);
+        if (btnPub) {
+            btnPub.textContent = 'Pre-publish';
+            setBtn(btnPub, baseOk, 'preprod');
         }
 
     } else if (statut === 'pre-prod') {
-        btn.textContent = 'Publish';
-        var allChecked = true;
-        document.querySelectorAll('.contenu.actif input[type="checkbox"]').forEach(function(chk) {
-            if (!chk.checked) allChecked = false;
-        });
-        if (allChecked) {
-            btn.disabled = false;
-            btn.classList.add('prod');
+        setBtn(btnSave, baseOk);
+        if (btnPub) {
+            btnPub.textContent = 'Publish';
+            var allChecked = true;
+            document.querySelectorAll('.contenu.actif input[type="checkbox"]').forEach(function(chk) {
+                if (!chk.checked) allChecked = false;
+            });
+            setBtn(btnPub, baseOk && allChecked, 'prod');
         }
+
+    } else if (statut === 'prod') {
+        setBtn(btnSave, baseOk);
     }
 }
