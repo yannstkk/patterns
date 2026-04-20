@@ -8,13 +8,13 @@ function chargeOnglet(id, bouton) {
 function getChecked() {
     var cb = {
         france: document.querySelector('.pays-liste input[value="france"]'),
-        uk:     document.querySelector('.pays-liste input[value="uk"]'),
+        uk: document.querySelector('.pays-liste input[value="uk"]'),
         italy:  document.querySelector('.pays-liste input[value="italy"]'),
         others: document.querySelector('.pays-liste input[value="others"]')
     };
     return {
         france: !!(cb.france && cb.france.checked),
-        uk: !!(cb.uk     && cb.uk.checked),
+        uk: !!(cb.uk && cb.uk.checked),
         italy: !!(cb.italy  && cb.italy.checked),
         others: !!(cb.others && cb.others.checked)
     };
@@ -81,9 +81,9 @@ function isSlotRequired(slotInput) {
     var src = slotEl.getAttribute('data-source');
     if (!src) return false;
     if (src === 'france') return c.france;
-    if (src === 'uk')     return c.uk;
+    if (src === 'uk') return c.uk;
     if (src === 'others') return c.others;
-    if (src === 'italy')  return c.italy;
+    if (src === 'italy') return c.italy;
     return false;
 }
 
@@ -105,7 +105,7 @@ function getRequiredSlots() {
 
     if (c.others) {
         required['france'] = required['france'] || [];
-        for (i = 7; i <= 11; i++)  required['france'].push(i);
+        for (i = 7; i <= 11; i++) required['france'].push(i);
         for (i = 19; i <= 23; i++) required['france'].push(i);
         required['spain'] = [];
         for (i = 0; i <= 9; i++) required['spain'].push(i);
@@ -115,17 +115,17 @@ function getRequiredSlots() {
 }
 
 function eventInfoFilled() {
-    var nom    = document.querySelector('input[name="nom_projet"]');
-    var link   = document.querySelector('input[name="link"]');
+    var nom = document.querySelector('input[name="nom_projet"]');
+    var link = document.querySelector('input[name="link"]');
     var launch = document.querySelector('input[name="launching_date"]');
     var result = document.querySelector('input[name="result_date"]');
-    var end    = document.querySelector('input[name="end_date"]');
+    var end = document.querySelector('input[name="end_date"]');
 
     if (!nom || !nom.value.trim()) return false;
-    if (link   && !link.value.trim())   return false;
+    if (link && !link.value.trim())   return false;
     if (launch && !launch.value.trim()) return false;
     if (result && !result.value.trim()) return false;
-    if (end    && !end.value.trim())    return false;
+    if (end && !end.value.trim()) return false;
     return true;
 }
 
@@ -153,9 +153,9 @@ function allImagesFilled() {
 
 function setBtn(btn, enabled, extraClass) {
     if (!btn) return;
-    btn.disabled      = !enabled;
+    btn.disabled = !enabled;
     btn.style.opacity = enabled ? '1' : '0.4';
-    btn.style.cursor  = enabled ? 'pointer' : 'not-allowed';
+    btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
     if (extraClass !== undefined) {
         btn.classList.remove('preprod', 'prod');
         if (enabled) btn.classList.add(extraClass);
@@ -171,9 +171,9 @@ function checkImageDimension(file, slot, pays, slotIndex) {
     var parts  = dataSize.toLowerCase().split('x');
     var width  = parseInt(parts[0]);
     var height = parseInt(parts[1]);
-    var img    = new Image();
-    var url    = URL.createObjectURL(file);
-    img.src    = url;
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.src = url;
     img.onload = function() {
         URL.revokeObjectURL(url);
         if (img.naturalWidth === width && img.naturalHeight === height) {
@@ -183,13 +183,17 @@ function checkImageDimension(file, slot, pays, slotIndex) {
             span.textContent = 'Incorrect size : ' + img.naturalWidth + 'x' + img.naturalHeight + ' (expected : ' + width + 'x' + height + ')';
             span.style.color = '#cc0000';
             slot.querySelector('input[type="file"]').value = '';
+            var indicator = slot.parentElement.querySelector('.slot-indicator');
+            if (indicator) { indicator.innerHTML = '<img src="./img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
             updateCounter(pays);
         }
     };
 }
 
+
+
 function uploadImage(file, slot, pays, slotIndex) {
-    var span   = slot.querySelector('span');
+    var span = slot.querySelector('span');
     var folder = slot.getAttribute('data-folder') || '';
     if (!eventId) {
         span.textContent = 'Save the form first to upload images';
@@ -199,30 +203,35 @@ function uploadImage(file, slot, pays, slotIndex) {
     span.textContent = 'Uploading...';
     span.style.color = '#888';
     var formData = new FormData();
-    formData.append('image',      file);
-    formData.append('pays',       pays);
+    formData.append('image', file);
+    formData.append('pays', pays);
     formData.append('slot_index', slotIndex);
     formData.append('dossier',    folder);
     fetch('./validation/upload_image.php', { method: 'POST', body: formData })
     .then(function(res) { return res.json(); })
     .then(function(data) {
-        if (data.success) {
-            span.textContent = data.filename;
-            span.style.color = '#2e7d32';
-            if (!savedImages[pays]) savedImages[pays] = {};
-            savedImages[pays][slotIndex] = data.filename;
-        } else {
-            span.textContent = data.error;
+            var indicator = slot.parentElement.querySelector('.slot-indicator');
+            if (data.success) {
+                span.textContent = data.filename;
+                span.style.color = '#2e7d32';
+                if (!savedImages[pays]) savedImages[pays] = {};
+                savedImages[pays][slotIndex] = data.filename;
+                if (indicator) { indicator.innerHTML = '<img src="./img/imageOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
+            } else {
+                span.textContent = data.error;
+                span.style.color = '#cc0000';
+                if (indicator) { indicator.innerHTML = '<img src="./img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
+            }
+            updateCounter(pays);
+        })
+        .catch(function() {
+            span.textContent = 'Network error';
             span.style.color = '#cc0000';
+            var indicator = slot.parentElement.querySelector('.slot-indicator');
+            if (indicator) { indicator.innerHTML = '<img src="./img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
+            updateCounter(pays);
+        });
         }
-        updateCounter(pays);
-    })
-    .catch(function() {
-        span.textContent = 'Network error';
-        span.style.color = '#cc0000';
-        updateCounter(pays);
-    });
-}
 
 function updateCounter(pays) {
     var contenu = document.getElementById(pays);
@@ -232,7 +241,7 @@ function updateCounter(pays) {
         if (!isSlotRequired(slot)) return;
         var idx = parseInt(slot.getAttribute('data-slot-index'));
         var fileInput = slot.querySelector('input[type="file"]');
-        var hasNewFile   = fileInput && fileInput.files.length > 0;
+        var hasNewFile = fileInput && fileInput.files.length > 0;
         var hasSavedFile = savedImages[pays] && savedImages[pays][idx] !== undefined;
         if (!hasNewFile && !hasSavedFile) missing++;
     });
@@ -268,13 +277,15 @@ document.addEventListener('DOMContentLoaded', function() {
         slot.style.cursor = 'pointer';
         slot.style.flex = '1';
 
-        var checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.style.cursor = 'pointer';
-        checkbox.style.flexShrink = '0';
-        checkbox.addEventListener('change', checkPublishButton);
+        var icon = document.createElement('img');
+        icon.src = './img/AddPngPicture.png';
+        icon.style.width = '14px';
+        icon.style.height = '15px';
+        icon.style.flexShrink = '0';
+        icon.style.pointerEvents = 'none';
+        slot.appendChild(icon);
 
-        var wrapper = document.createElement('div');
+        var wrapper = document.createElement('div'); 
         wrapper.style.display = 'flex';
         wrapper.style.alignItems = 'center';
         wrapper.style.gap = '6px';
@@ -282,9 +293,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
         slot.parentElement.insertBefore(wrapper, slot);
         wrapper.appendChild(slot);
-        if (statut === 'pre-prod' || statut === 'prod') {
+
+        if (statut === 'draft') {
+            var indicator = document.createElement('span');
+            indicator.className = 'slot-indicator';
+            indicator.style.flexShrink = '0';
+            indicator.style.fontSize = '16px';
+            indicator.style.display = 'none';
+            wrapper.appendChild(indicator); 
+        }
+
+        if (statut === 'pre-prod') {
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.style.cursor = 'pointer';
+            checkbox.style.flexShrink = '0';
+            checkbox.addEventListener('change', checkPublishButton);
             wrapper.appendChild(checkbox);
         }
+
+        if (statut === 'prod') {
+            slot.style.opacity = '0.4';
+            slot.style.pointerEvents = 'none';
+
+            var cadenas = document.createElement('span');
+            cadenas.textContent = '🔒';
+            cadenas.style.cursor = 'pointer';
+            cadenas.style.flexShrink = '0';
+            cadenas.style.fontSize = '15px';
+            cadenas.title = 'Cliquer pour déverrouiller';
+            cadenas.dataset.locked = 'true';
+
+            cadenas.addEventListener('click', function() {
+                var isLocked = cadenas.dataset.locked === 'true';
+                if (isLocked) {
+                    cadenas.textContent = '🔓';
+                    cadenas.dataset.locked = 'false';
+                    cadenas.title = 'Cliquer pour verrouiller';
+                    slot.style.opacity = '1';
+                    slot.style.pointerEvents = '';
+                } else {
+                    cadenas.textContent = '🔒';
+                    cadenas.dataset.locked = 'true';
+                    cadenas.title = 'Cliquer pour déverrouiller';
+                    slot.style.opacity = '0.4';
+                    slot.style.pointerEvents = 'none';
+                }
+            });
+
+            wrapper.appendChild(cadenas);
+
+        }
+
 
         slot.addEventListener('click', function(e) {
             if (e.target.tagName === 'INPUT') return;
@@ -304,17 +364,17 @@ document.addEventListener('DOMContentLoaded', function() {
         })(slot, pays, slotIndex);
     });
 
-    var nomInput    = document.querySelector('input[name="nom_projet"]');
-    var linkInput   = document.querySelector('input[name="link"]');
+    var nomInput = document.querySelector('input[name="nom_projet"]');
+    var linkInput = document.querySelector('input[name="link"]');
     var launchInput = document.querySelector('input[name="launching_date"]');
     var resultInput = document.querySelector('input[name="result_date"]');
-    var endInput    = document.querySelector('input[name="end_date"]');
+    var endInput = document.querySelector('input[name="end_date"]');
 
-    if (nomInput)    nomInput.addEventListener('input', checkPublishButton);
-    if (linkInput)   linkInput.addEventListener('input', checkPublishButton);
+    if (nomInput) nomInput.addEventListener('input', checkPublishButton);
+    if (linkInput) linkInput.addEventListener('input', checkPublishButton);
     if (launchInput) launchInput.addEventListener('change', checkPublishButton);
     if (resultInput) resultInput.addEventListener('change', checkPublishButton);
-    if (endInput)    endInput.addEventListener('change', checkPublishButton);
+    if (endInput) endInput.addEventListener('change', checkPublishButton);
 
     document.querySelectorAll('.pays-liste input[type="checkbox"]').forEach(function(cb) {
         cb.addEventListener('change', checkPublishButton);
@@ -334,10 +394,10 @@ function filtrer(type, bouton) {
 }
 
 function appliquerFiltres() {
-    var champ     = document.getElementById('champ-recherche');
+    var champ = document.getElementById('champ-recherche');
     var recherche = champ ? champ.value.toLowerCase() : '';
     document.querySelectorAll('#corps-tableau tr').forEach(function(ligne) {
-        var typeOk      = filtreActif === 'all' || ligne.getAttribute('data-type') === filtreActif;
+        var typeOk = filtreActif === 'all' || ligne.getAttribute('data-type') === filtreActif;
         var rechercheOk = recherche === '' || ligne.textContent.toLowerCase().includes(recherche);
         ligne.style.display = (typeOk && rechercheOk) ? '' : 'none';
     });
@@ -346,14 +406,14 @@ function appliquerFiltres() {
 function checkPublishButton() {
     var statutEl = document.querySelector('input[name="statut_actuel"]');
     if (!statutEl) return;
-    var statut  = statutEl.value;
+    var statut = statutEl.value;
     var btnSave = document.querySelector('.btn-save');
-    var btnPub  = document.querySelector('.btn-publish');
+    var btnPub = document.querySelector('.btn-publish');
 
-    var infoOk    = eventInfoFilled();
+    var infoOk = eventInfoFilled();
     var countryOk = countrySelected();
-    var imagesOk  = allImagesFilled();
-    var baseOk    = infoOk && countryOk && imagesOk;
+    var imagesOk = allImagesFilled();
+    var baseOk = infoOk && countryOk && imagesOk;
 
     if (statut === 'draft') {
         setBtn(btnSave, true);
@@ -373,7 +433,20 @@ function checkPublishButton() {
             setBtn(btnPub, baseOk && allChecked, 'prod');
         }
 
-    } else if (statut === 'prod') {
-        setBtn(btnSave, baseOk);
-    }
+   } else if (statut === 'prod') {
+    var unlockedAllFilled = true;
+    document.querySelectorAll('.contenu span[data-locked="false"]').forEach(function(cadenas) {
+        var slotEl = cadenas.closest('.wrapper') 
+            ? cadenas.parentElement.querySelector('.slot-input')
+            : cadenas.previousElementSibling;
+        if (!slotEl) return;
+        var idx = parseInt(slotEl.getAttribute('data-slot-index'));
+        var pays = slotEl.closest('.contenu').id;
+        var hasSaved = savedImages[pays] && savedImages[pays][idx] !== undefined;
+        var fileInput = slotEl.querySelector('input[type="file"]');
+        var hasNew = fileInput && fileInput.files.length > 0;
+        if (!hasNew && !hasSaved) unlockedAllFilled = false;
+    });
+    setBtn(btnSave, infoOk && unlockedAllFilled);
+}
 }

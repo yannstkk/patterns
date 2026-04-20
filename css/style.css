@@ -236,17 +236,17 @@ input[type=text].error, input[type=date].error, select.error {
     border: 1px solid #bbb;
     border-radius: 3px;
     background: white;
-    font-size: 12px;
+    font-size: 15px;
     cursor: pointer;
     color: #333;
-    font-style: italic;
+    font-style: normal;
 }
 
 .filtre-btn.actif {
     border: 2px solid #0867A4;
     font-weight: bold;
     background: white;
-    color: #333;
+    color: #0867A4;
 }
 
 .barre-outils {
@@ -291,68 +291,79 @@ input[type=text].error, input[type=date].error, select.error {
 
 .list-table {
     width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    border: 1px solid #aaa;
+    border-collapse: separate;   
+    border-spacing: 6px;        
+    border: none;               
 }
 
-.list-table thead tr th {
-    background: #d6e4f0;
-    padding: 7px 10px;
+.list-table thead th {
+     background: transparent;     
+    padding: 10px 6px;
     text-align: center;
     font-weight: bold;
     font-style: italic;
-    color: #222;
-    border: 1px solid #aaa;
-    white-space: nowrap;
+    font-size: 17px;
+    color: #6b7280;          
+    border: 1px solid #333;         
 }
 
-.list-table tbody tr td {
-    padding: 6px 10px;
-    border: 1px solid #aaa;
-    color: #333;
-    background: white;
-    font-style: italic;
+.list-table tbody td {
+    padding: 7px 10px;
+    color: #0867A4;
+    background: #ffffff;        
     text-align: center;
+    font-style: normal;
+    border: 1px solid #333;         
 }
 
 .list-table tbody tr:hover td { background: #f0f6fc; }
 
 .cell-name {
     color: #0867A4;
-    text-decoration: underline;
-    cursor: pointer;
     text-align: left;
 }
 
-.cell-status { padding: 3px 5px; }
 
 .cell-actions {
     white-space: nowrap;
 }
 
-.status-badge {
-    display: inline-block;
-    padding: 3px 12px;
-    border-radius: 2px;
-    color: white;
-    font-weight: bold;
-    font-size: 12px;
-    font-style: normal;
-    min-width: 60px;
-    text-align: center;
+
+.list-table tbody td.cell-status {
+    padding: 0;
 }
 
-.status-draft   { background: #757575; }
-.status-preprod { background: #e67e00; }
-.status-prod    { background: #2e7d32; }
+.status-badge {
+    display: block;   
+    width: 100%;
+    height: 100%;
+    padding: 7px 0;    
+    
+    text-align: center;
+    color: white;
+    font-size: 15px;
+    font-style: normal;
+}
+
+.status-draft   { background: #868686; }
+.status-preprod { background: #ED8C06; }
+.status-prod    { background: #2E9409; }
+.status-close   { background: #3B3B3B; } 
+
+
+.cell-actions {
+    white-space: nowrap;
+    display: flex;           
+    justify-content: center;
+    gap: 8px;           
+}
 
 .cell-actions a,
 .cell-actions button {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0 3px;
+    padding: 0 7px;
     text-decoration: none;
     display: inline-flex;
     align-items: center;

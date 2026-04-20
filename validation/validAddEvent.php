@@ -125,7 +125,9 @@ if ($step >= 3 || in_array($statutActuel, ['pre-prod', 'prod'])) {
     }
 }
 
+
 if (empty($errors) && in_array($statutActuel, ['pre-prod', 'prod'])) {
+
     $sessionImages = $_SESSION['images'] ?? [];
     $requiredSlots = getRequiredImageSlots($paysEffectifs);
 

@@ -14,7 +14,7 @@ $events = getListEvent();
 <body>
 <div class="page">
 
-    <h1 class="list-title">Management of Fun Month</h1>
+    <h1 class="list-title">Events' Management</h1>
 
     <div class="filtres">
         <button class="filtre-btn actif" onclick="filtrer('all', this)">All</button>
@@ -30,6 +30,8 @@ $events = getListEvent();
         <a href="index.php?page=AddEvent&new=1" class="btn-add">+Add an event</a>
     </div>
 
+
+    
 
     <table class="list-table">
         <thead>
@@ -62,9 +64,19 @@ $events = getListEvent();
             if (empty($countryDisplay)) $countryDisplay = '-';
 
             $etat = $e['etat_event'] ?? 'draft';
-            if ($etat === 'pre-prod') { $badgeClass = 'status-preprod'; $badgeLabel = 'Pre-prod'; }
-            elseif ($etat === 'prod') { $badgeClass = 'status-prod';    $badgeLabel = 'Prod'; }
-            else { $badgeClass = 'status-draft';   $badgeLabel = 'Draft'; }
+            if ($etat === 'pre-prod') {
+                $badgeClass = 'status-preprod';
+                $badgeLabel = 'Pre-prod';
+            } elseif ($etat === 'prod') {
+                $badgeClass = 'status-prod';
+                $badgeLabel = 'Prod';
+            } elseif ($etat === 'close') {
+                $badgeClass = 'status-close';
+                $badgeLabel = 'Close';
+            } else {
+                $badgeClass = 'status-draft';
+                $badgeLabel = 'Draft';
+            }
         ?>
         <tr data-type="<?= htmlspecialchars($e['type_event'] ?? '') ?>">
             <td class="cell-center"><?= (int)$e['ID'] ?></td>

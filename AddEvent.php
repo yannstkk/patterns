@@ -84,7 +84,7 @@ $hFR = in_array('france', $paysList) ? '' : 'style="display:none"';
 $hUK = in_array('uk', $paysList) ? '' : 'style="display:none"';
 $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
 
-$saveBtnDisabled = in_array($statut, ['pre-prod', 'prod']) ? 'disabled' : '';
+$saveBtnDisabled = '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -121,9 +121,12 @@ $saveBtnDisabled = in_array($statut, ['pre-prod', 'prod']) ? 'disabled' : '';
             <?php endif; ?>
         </div>
 
+        
+
+
         <div class="ligne">
             <label>Event type :</label>
-            <select name="type_event" <?= $statut === 'prod' ? 'disabled' : '' ?>>
+            <select name="type_event" >
                 <?php foreach (['Fun Month', 'Donnation'] as $opt): ?>
                     <option value="<?= $opt ?>" <?= ($rep['type_event'] ?? '') === $opt ? 'selected' : '' ?>>
                         <?= $opt ?>
@@ -206,8 +209,7 @@ $saveBtnDisabled = in_array($statut, ['pre-prod', 'prod']) ? 'disabled' : '';
                 <?php foreach (['france' => 'France', 'uk' => 'UK', 'italy' => 'Italy', 'others' => 'Others'] as $val => $label): ?>
                 <label>
                     <input type="checkbox" value="<?= $val ?>" name="pays_list[]" onchange="updateOnglets()"
-                        <?= in_array($val, $rep['pays_list'] ?? []) ? 'checked' : '' ?>
-                        <?= $statut === 'prod' ? 'disabled' : '' ?>>
+                        <?= in_array($val, $rep['pays_list'] ?? []) ? 'checked' : '' ?>>
                     <?= $label ?>
                 </label>
                 <?php endforeach; ?>
