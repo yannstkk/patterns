@@ -85,7 +85,8 @@ h2 {
 
 .grille {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, 26%);
+    justify-content: space-between;
     gap: 10px;
     margin-bottom: 10px;
 }

@@ -110,6 +110,9 @@ function getRequiredSlots() {
         required['spain'] = [];
         for (i = 0; i <= 9; i++) required['spain'].push(i);
     }
+    if (c.italy) {
+    required['italy'] = [0, 1, 2, 3];
+    }
 
     return required;
 }
@@ -162,10 +165,10 @@ function setBtn(btn, enabled, extraClass) {
     }
 }
 
-function checkImageDimension(file, slot, pays, slotIndex) {
+function checkImageDimension(file, slot, pays, slotIndex, siteName, loginLogout) {
     var dataSize = slot.getAttribute('data-size');
     if (!dataSize || dataSize.trim() === '') {
-        uploadImage(file, slot, pays, slotIndex);
+        uploadImage(file, slot, pays, slotIndex, siteName, loginLogout);
         return;
     }
     var parts  = dataSize.toLowerCase().split('x');
@@ -177,7 +180,7 @@ function checkImageDimension(file, slot, pays, slotIndex) {
     img.onload = function() {
         URL.revokeObjectURL(url);
         if (img.naturalWidth === width && img.naturalHeight === height) {
-            uploadImage(file, slot, pays, slotIndex);
+            uploadImage(file, slot, pays, slotIndex, siteName, loginLogout);
         } else {
             var span = slot.querySelector('span');
             span.textContent = 'Incorrect size : ' + img.naturalWidth + 'x' + img.naturalHeight + ' (expected : ' + width + 'x' + height + ')';
@@ -192,46 +195,53 @@ function checkImageDimension(file, slot, pays, slotIndex) {
 
 
 
-function uploadImage(file, slot, pays, slotIndex) {
+function uploadImage(file, slot, pays, slotIndex, siteName, loginLogout) {
     var span = slot.querySelector('span');
-    var folder = slot.getAttribute('data-folder') || '';
     if (!eventId) {
         span.textContent = 'Save the form first to upload images';
         span.style.color = '#cc0000';
         return;
     }
+
+    var originalName = file.name.replace(/\.[^.]+$/, '').toLowerCase()
+                                .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
     span.textContent = 'Uploading...';
     span.style.color = '#888';
+
     var formData = new FormData();
     formData.append('image', file);
     formData.append('pays', pays);
     formData.append('slot_index', slotIndex);
-    formData.append('dossier',    folder);
+    formData.append('site_name', siteName);
+    formData.append('login_logout', loginLogout);
+    formData.append('original_name',  originalName);
+
     fetch('./validation/upload_image.php', { method: 'POST', body: formData })
     .then(function(res) { return res.json(); })
     .then(function(data) {
-            var indicator = slot.parentElement.querySelector('.slot-indicator');
-            if (data.success) {
-                span.textContent = data.filename;
-                span.style.color = '#2e7d32';
-                if (!savedImages[pays]) savedImages[pays] = {};
-                savedImages[pays][slotIndex] = data.filename;
-                if (indicator) { indicator.innerHTML = '<img src="./img/imageOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
-            } else {
-                span.textContent = data.error;
-                span.style.color = '#cc0000';
-                if (indicator) { indicator.innerHTML = '<img src="./img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
-            }
-            updateCounter(pays);
-        })
-        .catch(function() {
-            span.textContent = 'Network error';
+        var indicator = slot.parentElement.querySelector('.slot-indicator');
+        if (data.success) {
+            span.textContent = data.filename;
+            span.style.color = '#2e7d32';
+            if (!savedImages[pays]) savedImages[pays] = {};
+            savedImages[pays][slotIndex] = data.filename;
+            if (indicator) { indicator.innerHTML = '<img src="./img/imageOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
+        } else {
+            span.textContent = data.error;
             span.style.color = '#cc0000';
-            var indicator = slot.parentElement.querySelector('.slot-indicator');
             if (indicator) { indicator.innerHTML = '<img src="./img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
-            updateCounter(pays);
-        });
         }
+        updateCounter(pays);
+    })
+    .catch(function() {
+        span.textContent = 'Network error';
+        span.style.color = '#cc0000';
+        var indicator = slot.parentElement.querySelector('.slot-indicator');
+        if (indicator) { indicator.innerHTML = '<img src="./img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
+        updateCounter(pays);
+    });
+}
 
 function updateCounter(pays) {
     var contenu = document.getElementById(pays);
@@ -260,6 +270,9 @@ document.addEventListener('DOMContentLoaded', function() {
         var pays = slot.closest('.contenu').id;
         if (!countrySlotIndex[pays]) countrySlotIndex[pays] = 0;
         var slotIndex = countrySlotIndex[pays]++;
+        var parentSlot  = slot.parentElement; 
+        var siteName = parentSlot.getAttribute('data-site') || 'SITE';
+        var loginLogout = parentSlot.getAttribute('data-mode') || 'na';
 
         slot.setAttribute('data-slot-index', slotIndex);
 
@@ -308,7 +321,28 @@ document.addEventListener('DOMContentLoaded', function() {
             checkbox.type = 'checkbox';
             checkbox.style.cursor = 'pointer';
             checkbox.style.flexShrink = '0';
-            checkbox.addEventListener('change', checkPublishButton);
+
+            var filename = savedImages[pays] && savedImages[pays][slotIndex] !== undefined
+                        ? savedImages[pays][slotIndex] : null;
+            if (filename && checkedImages[filename] === 1) {
+                checkbox.checked = true;
+            }
+
+            checkbox.addEventListener('change', function() {
+                checkPublishButton();
+
+                var fname = savedImages[pays] && savedImages[pays][slotIndex] !== undefined
+                            ? savedImages[pays][slotIndex] : null;
+                if (!fname) return;
+
+                var formData = new FormData();
+                formData.append('name_image', fname);
+                formData.append('checked', checkbox.checked ? '1' : '0');
+
+                fetch('./validation/update_image_checked.php', { method: 'POST', body: formData })
+                    .catch(function() { console.error('Checkbox sync failed'); });
+            });
+
             wrapper.appendChild(checkbox);
         }
 
@@ -351,18 +385,18 @@ document.addEventListener('DOMContentLoaded', function() {
             this.querySelector('input[type="file"]').click();
         });
 
-        (function(capturedSlot, capturedPays, capturedIndex) {
-            input.addEventListener('change', function() {
-                if (this.files.length === 0) {
-                    capturedSlot.querySelector('span').textContent = 'Add PNG picture';
-                    capturedSlot.querySelector('span').style.color = '#aaa';
-                    updateCounter(capturedPays);
-                    return;
-                }
-                checkImageDimension(this.files[0], capturedSlot, capturedPays, capturedIndex);
-            });
-        })(slot, pays, slotIndex);
-    });
+        (function(capturedSlot, capturedPays, capturedIndex, capturedSite, capturedMode) {
+        input.addEventListener('change', function() {
+            if (this.files.length === 0) {
+                capturedSlot.querySelector('span').textContent = 'Add PNG picture';
+                capturedSlot.querySelector('span').style.color = '#aaa';
+                updateCounter(capturedPays);
+                return;
+            }
+            checkImageDimension(this.files[0], capturedSlot, capturedPays, capturedIndex, capturedSite, capturedMode);
+        });
+    })(slot, pays, slotIndex, siteName, loginLogout);
+});
 
     var nomInput = document.querySelector('input[name="nom_projet"]');
     var linkInput = document.querySelector('input[name="link"]');
@@ -398,7 +432,7 @@ function appliquerFiltres() {
     var recherche = champ ? champ.value.toLowerCase() : '';
     document.querySelectorAll('#corps-tableau tr').forEach(function(ligne) {
         var typeOk = filtreActif === 'all' || ligne.getAttribute('data-type') === filtreActif;
-        var rechercheOk = recherche === '' || ligne.textContent.toLowerCase().includes(recherche);
+        var rechercheOk = recherche === '' || ligne.textContent.toLowerCase().includes(recherche); 
         ligne.style.display = (typeOk && rechercheOk) ? '' : 'none';
     });
 }
@@ -436,6 +470,7 @@ function checkPublishButton() {
    } else if (statut === 'prod') {
     var unlockedAllFilled = true;
     document.querySelectorAll('.contenu span[data-locked="false"]').forEach(function(cadenas) {
+        
         var slotEl = cadenas.closest('.wrapper') 
             ? cadenas.parentElement.querySelector('.slot-input')
             : cadenas.previousElementSibling;

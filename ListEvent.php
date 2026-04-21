@@ -30,9 +30,7 @@ $events = getListEvent();
         <a href="index.php?page=AddEvent&new=1" class="btn-add">+Add an event</a>
     </div>
 
-
     
-
     <table class="list-table">
         <thead>
             <tr>

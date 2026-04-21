@@ -7,7 +7,7 @@ $statutActuel = $_POST['statut_actuel'] ?? 'draft';
 $step = (int)($_POST['step'] ?? 1);
 $eventId = $_SESSION['event_id'] ?? null;
 $isEdit = $_SESSION['is_edit'] ?? false;
-$previousRep = $_SESSION['reponses'] ?? [];
+$previousRep  = $_SESSION['reponses'] ?? [];
 $errors = [];
 
 $launchingDate = trim($_POST['launching_date'] ?? '');
@@ -16,21 +16,20 @@ $endDate = trim($_POST['end_date'] ?? '');
 
 function getRequiredImageSlots(array $pays) {
     $required = [];
-
     if (in_array('france', $pays)) {
         $required['france'] = array_merge(range(0, 6), range(12, 18));
     }
-
     if (in_array('uk', $pays)) {
         $required['uk'] = range(0, 17);
     }
-
+    if (in_array('italy', $pays)) {
+        $required['italy'] = range(0, 3);
+    }
     if (in_array('others', $pays)) {
         $othersInFrance = array_merge(range(7, 11), range(19, 23));
         $required['france'] = array_unique(array_merge($required['france'] ?? [], $othersInFrance));
         $required['spain'] = range(0, 9);
     }
-
     return $required;
 }
 
@@ -60,7 +59,7 @@ if ($step === 1) {
     $id = saveEvent($data, null, 'draft');
     if ($id) {
         $_SESSION['event_id'] = $id;
-        $_SESSION['statut'] = 'draft';
+        $_SESSION['statut']   = 'draft';
         $_SESSION['reponses'] = array_merge($previousRep, $data);
     }
 
@@ -68,6 +67,7 @@ if ($step === 1) {
     header('Location: ../index.php?page=AddEvent');
     exit;
 }
+ 
 
 if (empty(trim($_POST['nom_projet'] ?? ''))) {
     $errors['nom_projet'] = 'The project name is required';
@@ -90,15 +90,9 @@ if (empty($errors)) {
     $formatResult = DateTime::createFromFormat('Y-m-d', $resultDate);
     $formatEnd = DateTime::createFromFormat('Y-m-d', $endDate);
 
-    if (!$formatLaunch) {
-        $errors['launching_date'] = 'Invalid launch date format';
-    }
-    if (!$formatResult) {
-        $errors['result_date'] = 'Invalid result date format';
-    }
-    if (!$formatEnd) {
-        $errors['end_date'] = 'Invalid end date format';
-    }
+    if (!$formatLaunch) $errors['launching_date'] = 'Invalid launch date format';
+    if (!$formatResult) $errors['result_date'] = 'Invalid result date format';
+    if (!$formatEnd) $errors['end_date'] = 'Invalid end date format';
 
     if (empty($errors)) {
         $today = new DateTime();
@@ -125,12 +119,9 @@ if ($step >= 3 || in_array($statutActuel, ['pre-prod', 'prod'])) {
     }
 }
 
-
-if (empty($errors) && in_array($statutActuel, ['pre-prod', 'prod'])) {
-
+if (empty($errors) && $action === 'pre-publish') {
     $sessionImages = $_SESSION['images'] ?? [];
     $requiredSlots = getRequiredImageSlots($paysEffectifs);
-
     foreach ($requiredSlots as $pays => $indices) {
         foreach ($indices as $idx) {
             if (!isset($sessionImages[$pays][$idx])) {
@@ -158,25 +149,6 @@ if ($action === 'pre-publish' && $eventId) {
     unset($_SESSION['step']);
     header('Location: ../index.php?page=AddEvent');
     exit;
-}
-
-if (!isset($_SESSION['images'])) {
-    $_SESSION['images'] = [];
-}
-if (isset($_FILES['images'])) {
-    $uploadDir = __DIR__ . '/../uploads/';
-    if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-    foreach ($_FILES['images']['name'] as $pays => $slots) {
-        foreach ($slots as $index => $name) {
-            if ($_FILES['images']['error'][$pays][$index] !== UPLOAD_ERR_OK) continue;
-            $tmpPath = $_FILES['images']['tmp_name'][$pays][$index];
-            $finfo = new finfo(FILEINFO_MIME_TYPE);
-            if ($finfo->file($tmpPath) !== 'image/png') continue;
-            $filename = $pays . '_' . $index . '_' . basename($name);
-            move_uploaded_file($tmpPath, $uploadDir . $filename);
-            $_SESSION['images'][$pays][$index] = $filename;
-        }
-    }
 }
 
 $data = [
