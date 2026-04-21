@@ -1,5 +1,5 @@
 <?php
-include(__DIR__ . "/../config/config.php");
+include(__DIR__."/../config/config.php");
 
 $cnx = connectBaseExterne_PDO(200);
 

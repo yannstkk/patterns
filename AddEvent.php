@@ -3,13 +3,13 @@ session_start();
 include_once __DIR__.'/model/event.php';
 
 if (isset($_GET['new'])) {
-    $_SESSION['reponses']       = [];
-    $_SESSION['errors']         = [];
-    $_SESSION['statut']         = 'draft';
-    $_SESSION['event_id']       = null;
-    $_SESSION['images']         = [];
+    $_SESSION['reponses'] = [];
+    $_SESSION['errors'] = [];
+    $_SESSION['statut'] = 'draft';
+    $_SESSION['event_id'] = null;
+    $_SESSION['images'] = [];
     $_SESSION['checked_images'] = [];
-    $_SESSION['is_edit']        = false;
+    $_SESSION['is_edit'] = false;
     unset($_SESSION['step']);
     header('Location: index.php?page=AddEvent');
     exit;
@@ -35,28 +35,21 @@ if (isset($_GET['edit'])) {
         $pays = array_unique($pays);
 
         $_SESSION['event_id'] = $editId;
-        $_SESSION['statut'] = $eventData['etat_event'] ?? 'draft';
-        $_SESSION['errors'] = [];
+        $_SESSION['statut']   = $eventData['etat_event'] ?? 'draft';
+        $_SESSION['errors']   = [];
         $_SESSION['is_edit']  = true;
         unset($_SESSION['step']);
         $_SESSION['reponses'] = [
             'nom_projet' => $eventData['titre'] ?? '',
             'type_event' => $eventData['type_event'] ?? '',
             'link' => $eventData['supplement_url'] ?? '',
-            'launching_date' => !empty($eventData['date_debut'])   ? date('Y-m-d', strtotime($eventData['date_debut']))   : '',
-            'result_date' => !empty($eventData['date_winner'])  ? date('Y-m-d', strtotime($eventData['date_winner']))  : '',
-            'end_date' => !empty($eventData['date_fin'])     ? date('Y-m-d', strtotime($eventData['date_fin']))     : '',
+            'launching_date' => !empty($eventData['date_debut'])  ? date('Y-m-d', strtotime($eventData['date_debut']))  : '',
+            'result_date' => !empty($eventData['date_winner']) ? date('Y-m-d', strtotime($eventData['date_winner'])) : '',
+            'end_date' => !empty($eventData['date_fin']) ? date('Y-m-d', strtotime($eventData['date_fin']))    : '',
             'pays_list' => $pays,
         ];
 
         $_SESSION['images'] = [];
-        $uploadDir = __DIR__ . '/uploads/';
-        if (is_dir($uploadDir)) {
-            foreach (glob($uploadDir . '*-' . $editId . '-*.webp') as $filepath) {
-                $fname = basename($filepath);
-            }
-        }
-
         try {
             $stmtImg = $cnx->prepare("SELECT name_image, slot_index, pays FROM image_events WHERE id_event = :id");
             $stmtImg->execute([':id' => $editId]);
@@ -81,6 +74,36 @@ $rep = $_SESSION['reponses'] ?? [];
 $errors  = $_SESSION['errors'] ?? [];
 $eventId = $_SESSION['event_id'] ?? null;
 
+if ($eventId && !isset($_GET['edit']) && !isset($_GET['new'])) {
+    $langToPays = [
+        'fr' => 'france', 'en' => 'uk', 'it' => 'italy',
+        'others' => 'others', 'es' => 'others',
+        'france' => 'france', 'uk' => 'uk', 'italy' => 'italy',
+    ];
+
+    $stmtSync = $cnx->prepare("SELECT langue FROM config_event WHERE ID = :id LIMIT 1");
+    $stmtSync->execute([':id' => $eventId]);
+    $rowSync = $stmtSync->fetch(PDO::FETCH_ASSOC);
+    if ($rowSync) {
+        $pays = [];
+        foreach (explode(',', $rowSync['langue'] ?? '') as $code) {
+            $code = strtolower(trim($code));
+            if (isset($langToPays[$code])) $pays[] = $langToPays[$code];
+        }
+        $rep['pays_list'] = array_unique($pays);
+        $_SESSION['reponses']['pays_list'] = $rep['pays_list'];
+    }
+
+    $_SESSION['checked_images'] = [];
+    try {
+        $stmtChk = $cnx->prepare("SELECT name_image, checked FROM image_events WHERE id_event = :id");
+        $stmtChk->execute([':id' => $eventId]);
+        foreach ($stmtChk->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $_SESSION['checked_images'][$row['name_image']] = (int)$row['checked'];
+        }
+    } catch (PDOException $e) {}
+}
+
 if (!empty($errors) && isset($_SESSION['step'])) {
     $step = (int)$_SESSION['step'];
 } else {
@@ -94,12 +117,13 @@ if (!empty($errors) && isset($_SESSION['step'])) {
 }
 
 $paysList = $rep['pays_list'] ?? [];
-$hFR = in_array('france', $paysList) ? '' : 'style="display:none"';
-$hUK = in_array('uk', $paysList) ? '' : 'style="display:none"';
+$hFR  = in_array('france', $paysList) ? '' : 'style="display:none"';
+$hUK  = in_array('uk', $paysList) ? '' : 'style="display:none"';
 $hOTH = in_array('others', $paysList) ? '' : 'style="display:none"';
 
 $saveBtnDisabled = '';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -124,12 +148,15 @@ $saveBtnDisabled = '';
         <input type="hidden" name="step" value="<?= $step ?>">
 
         <h2>Event information :</h2>
-
         <div class="ligne">
             <label class="<?= isset($errors['nom_projet']) ? 'error' : '' ?>">Project name :</label>
             <input type="text" name="nom_projet"
-                   class="<?= isset($errors['nom_projet']) ? 'error' : '' ?>"
-                   value="<?= htmlspecialchars($rep['nom_projet'] ?? '') ?>">
+                class="<?= isset($errors['nom_projet']) ? 'error' : '' ?>"
+                value="<?= htmlspecialchars($rep['nom_projet'] ?? '') ?>"
+                <?= $statut === 'prod' ? 'disabled style="background:#e9e9e9;color:#888;cursor:not-allowed;"' : '' ?>>
+            <?php if ($statut === 'prod'): ?>
+                <input type="hidden" name="nom_projet" value="<?= htmlspecialchars($rep['nom_projet'] ?? '') ?>">
+            <?php endif; ?>
             <?php if (isset($errors['nom_projet'])): ?>
                 <span class="error"><?= $errors['nom_projet'] ?></span>
             <?php endif; ?>
@@ -137,13 +164,16 @@ $saveBtnDisabled = '';
 
         <div class="ligne">
             <label>Event type :</label>
-            <select name="type_event">
+            <select name="type_event" <?= $statut === 'prod' ? 'disabled style="background:#e9e9e9;color:#888;cursor:not-allowed;"' : '' ?>>
                 <?php foreach (['Fun Month', 'Donnation'] as $opt): ?>
                     <option value="<?= $opt ?>" <?= ($rep['type_event'] ?? '') === $opt ? 'selected' : '' ?>>
                         <?= $opt ?>
                     </option>
                 <?php endforeach; ?>
             </select>
+            <?php if ($statut === 'prod'): ?>
+                <input type="hidden" name="type_event" value="<?= htmlspecialchars($rep['type_event'] ?? '') ?>">
+            <?php endif; ?>
         </div>
 
         <?php if ($step === 1): ?>
@@ -182,8 +212,7 @@ $saveBtnDisabled = '';
                 <span class="error"><?= $errors['result_date'] ?></span>
             <?php endif; ?>
         </div>
-
-        
+ 
 
 
         <div class="ligne">
@@ -218,13 +247,20 @@ $saveBtnDisabled = '';
             <label class="<?= isset($errors['pays_list[]']) ? 'error' : '' ?>">Country :</label>
             <div class="pays-liste">
                 <?php foreach (['france' => 'France', 'uk' => 'UK', 'italy' => 'Italy', 'others' => 'Others'] as $val => $label): ?>
-                <label>
-                    <input type="checkbox" value="<?= $val ?>" name="pays_list[]" onchange="updateOnglets()"
-                        <?= in_array($val, $rep['pays_list'] ?? []) ? 'checked' : '' ?>>
+                <label style="<?= $statut === 'prod' ? 'color:#aaa;cursor:not-allowed;' : '' ?>">
+                    <input type="checkbox" value="<?= $val ?>" name="pays_list[]"
+                        <?= $statut !== 'prod' ? 'onchange="updateOnglets()"' : '' ?>
+                        <?= in_array($val, $rep['pays_list'] ?? []) ? 'checked' : '' ?>
+                        <?= $statut === 'prod' ? 'disabled style="cursor:not-allowed;opacity:0.4;"' : '' ?>>
                     <?= $label ?>
                 </label>
                 <?php endforeach; ?>
             </div>
+            <?php if ($statut === 'prod'): ?>
+                <?php foreach ($rep['pays_list'] ?? [] as $val): ?>
+                    <input type="hidden" name="pays_list[]" value="<?= htmlspecialchars($val) ?>">
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
         <?php if (isset($errors['pays_list[]'])): ?>
             <span class="error"><?= $errors['pays_list[]'] ?></span>
@@ -247,7 +283,10 @@ $saveBtnDisabled = '';
                 <button type="button" class="onglet" id="onglet-spain" style="display:none" onclick="chargeOnglet('spain', this)">
                     Spanish (<span id="compteur-spain">0</span>)
                 </button>
-            </div>
+            </div>  
+            
+
+            
 
             <p id="message-aucun-pays" style="color:#999;font-style:italic;">Please select at least one country</p>
 
@@ -371,6 +410,7 @@ $saveBtnDisabled = '';
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
             </div>
+
 
             <div class="contenu" id="spain">
                 <h3>Main display</h3>

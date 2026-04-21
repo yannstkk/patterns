@@ -35,7 +35,7 @@ if (!function_exists('imagewebp')) {
 $pays = preg_replace('/[^a-z]/', '', strtolower($_POST['pays'] ?? ''));
 $slotIndex = (int)($_POST['slot_index'] ?? 0);
 $siteName = preg_replace('/[^a-zA-Z0-9]/', '', $_POST['site_name'] ?? 'SITE');
-$loginLogout  = in_array($_POST['login_logout'] ?? '', ['login', 'logout']) ? $_POST['login_logout'] : 'na';
+$loginLogout = in_array($_POST['login_logout'] ?? '', ['login', 'logout']) ? $_POST['login_logout'] : 'na';
 $originalName = preg_replace('/[^a-z0-9\-]/', '', strtolower($_POST['original_name'] ?? 'image'));
 
 $filename  = strtoupper($siteName) . '-' . $loginLogout . '-' . $eventId . '-' . $originalName . '.webp';
@@ -60,20 +60,20 @@ if (!$saved) {
 }
 
 try {
-    $stmt = $cnx->prepare("SELECT id_image_event FROM image_events WHERE id_event = :id AND name_image = :name LIMIT 1");
-    $stmt->execute([':id' => $eventId, ':name' => $filename]);
+    $stmt = $cnx->prepare("SELECT id FROM image_events WHERE id_event = :id AND pays = :pays AND slot_index = :slot LIMIT 1");
+    $stmt->execute([':id' => $eventId, ':pays' => $pays, ':slot' => $slotIndex]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($row) {
-        $cnx->prepare("UPDATE image_events SET name_image = :name WHERE id_image_event = :iid")
-            ->execute([':name' => $filename, ':iid' => $row['id_image_event']]);
+        $cnx->prepare("UPDATE image_events SET name_image = :name WHERE id = :iid")
+            ->execute([':name' => $filename, ':iid' => $row['id']]);
     } else {
         $cnx->prepare("INSERT INTO image_events (id_event, name_image, pays, slot_index, checked) 
-               VALUES (:id, :name, :pays, :slot, '0')")
-    ->execute([':id' => $eventId, ':name' => $filename, ':pays' => $pays, ':slot' => $slotIndex]);
+                       VALUES (:id, :name, :pays, :slot, 0)")
+            ->execute([':id' => $eventId, ':name' => $filename, ':pays' => $pays, ':slot' => $slotIndex]);
     }
 } catch (PDOException $e) {
-    error_log('image_events insert error: '.$e->getMessage());
+    error_log('image_events insert error: ' . $e->getMessage());
 }
 
 $_SESSION['images'][$pays][$slotIndex] = $filename;

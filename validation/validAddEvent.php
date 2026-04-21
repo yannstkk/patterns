@@ -137,15 +137,26 @@ $_SESSION['errors'] = $errors;
 
 if (!empty($errors)) {
     $_SESSION['step'] = $step;
-    header('Location: ' . $_SERVER['HTTP_REFERER']);
+    header('Location: '.$_SERVER['HTTP_REFERER']);
     exit;
 }
 
 if ($action === 'pre-publish' && $eventId) {
     $nouvelEtat = $statutActuel === 'draft' ? 'pre-prod' : ($statutActuel === 'pre-prod' ? 'prod' : $statutActuel);
-    $cnx->prepare("UPDATE config_event SET etat_event = :etat WHERE ID = :id")
-        ->execute([':etat' => $nouvelEtat, ':id' => (int)$eventId]);
-    $_SESSION['statut'] = $nouvelEtat;
+
+    $data = [
+        'nom_projet' => trim($_POST['nom_projet']),
+        'type_event' => $_POST['type_event'] ?? 'Fun Month',
+        'link' => trim($_POST['link']),
+        'launching_date' => $launchingDate,
+        'result_date' => $resultDate,
+        'end_date' => $endDate,
+        'pays_list' => $paysEffectifs,
+    ];
+    saveEvent($data, $eventId, $nouvelEtat);  
+
+    $_SESSION['statut']   = $nouvelEtat;
+    $_SESSION['reponses'] = array_merge($_SESSION['reponses'], $data);
     unset($_SESSION['step']);
     header('Location: ../index.php?page=AddEvent');
     exit;
@@ -166,6 +177,8 @@ if ($id) {
     $_SESSION['statut'] = $statutActuel;
     $_SESSION['reponses'] = array_merge($_SESSION['reponses'], $data);
 }
+
+
 
 unset($_SESSION['step']);
 header('Location: ../index.php?page=AddEvent');

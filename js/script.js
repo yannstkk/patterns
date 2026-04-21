@@ -33,7 +33,7 @@ function updateSlotSources() {
 }
 
 function toggleOnglet(pays, visible) {
-    var onglet  = document.getElementById('onglet-' + pays);
+    var onglet = document.getElementById('onglet-' + pays);
     var contenu = document.getElementById(pays);
     if (!onglet) return;
     if (visible) {
@@ -51,11 +51,13 @@ function updateOnglets() {
     updateSlotSources();
 
     toggleOnglet('france', c.france || c.others);
-    toggleOnglet('uk', c.uk || c.others);
+    toggleOnglet('uk', c.uk); 
     toggleOnglet('italy',  c.italy);
     toggleOnglet('spain',  c.others);
 
-    var nbVisible = (c.france || c.others ? 1 : 0) + (c.uk || c.others ? 1 : 0) + (c.italy ? 1 : 0) + (c.others ? 1 : 0);
+    ['france', 'uk', 'italy', 'spain'].forEach(updateCounter);
+
+    var nbVisible = (c.france || c.others ? 1 : 0) + (c.uk ? 1 : 0) + (c.italy ? 1 : 0) + (c.others ? 1 : 0);
     document.getElementById('message-aucun-pays').style.display = nbVisible === 0 ? 'block' : 'none';
 
     var actif = document.querySelector('.onglet.actif');
