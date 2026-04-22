@@ -195,8 +195,6 @@ function checkImageDimension(file, slot, pays, slotIndex, siteName, loginLogout)
     };
 }
 
-
-
 function uploadImage(file, slot, pays, slotIndex, siteName, loginLogout) {
     var span = slot.querySelector('span');
     if (!eventId) {
@@ -262,7 +260,103 @@ function updateCounter(pays) {
     checkPublishButton();
 }
 
+function getDraftKey() {
+    return 'event_form_draft_' + (eventId ? eventId : 'new');
+}
+
+function saveFormToStorage() {
+    var data = {};
+
+    var fields = ['nom_projet', 'link', 'launching_date', 'result_date', 'end_date'];
+    fields.forEach(function(name) {
+        var el = document.querySelector('[name="' + name + '"]:not([type="hidden"])');
+        if (el) data[name] = el.value;
+    });
+
+    var typeSelect = document.querySelector('select[name="type_event"]');
+    if (typeSelect) data['type_event'] = typeSelect.value;
+
+    var pays = [];
+    document.querySelectorAll('.pays-liste input[type="checkbox"]').forEach(function(cb) {
+        if (cb.checked) pays.push(cb.value);
+    });
+    data['pays_list'] = pays;
+
+    try {
+        localStorage.setItem(getDraftKey(), JSON.stringify(data));
+    } catch(e) {}
+}
+
+function restoreFormFromStorage() {
+    var raw;
+    try {
+        raw = localStorage.getItem(getDraftKey());
+    } catch(e) { return; }
+    if (!raw) return;
+
+    var data;
+    try { data = JSON.parse(raw); } catch(e) { return; }
+
+    var fields = ['nom_projet', 'link', 'launching_date', 'result_date', 'end_date'];
+    fields.forEach(function(name) {
+        var el = document.querySelector('[name="' + name + '"]:not([type="hidden"]):not([disabled])');
+        if (el && !el.value && data[name]) {
+            el.value = data[name];
+        }
+    });
+
+    var typeSelect = document.querySelector('select[name="type_event"]:not([disabled])');
+    if (typeSelect && data['type_event'] && !typeSelect.value) {
+        typeSelect.value = data['type_event'];
+    }
+
+    if (data['pays_list'] && Array.isArray(data['pays_list'])) {
+        data['pays_list'].forEach(function(val) {
+            var cb = document.querySelector('.pays-liste input[value="' + val + '"]:not([disabled])');
+            if (cb && !cb.checked) cb.checked = true;
+        });
+    }
+}
+
+function clearFormStorage() {
+    try {
+        localStorage.removeItem(getDraftKey());
+        localStorage.removeItem('event_form_draft_new');
+    } catch(e) {}
+}
+
+function bindFormPersistence() {
+    var statut = document.querySelector('input[name="statut_actuel"]');
+    if (statut && statut.value === 'prod') return;
+
+    var fields = ['nom_projet', 'link', 'launching_date', 'result_date', 'end_date'];
+    fields.forEach(function(name) {
+        var el = document.querySelector('[name="' + name + '"]:not([type="hidden"]):not([disabled])');
+        if (el) {
+            el.addEventListener('input', saveFormToStorage);
+            el.addEventListener('change', saveFormToStorage);
+        }
+    });
+
+    var typeSelect = document.querySelector('select[name="type_event"]:not([disabled])');
+    if (typeSelect) typeSelect.addEventListener('change', saveFormToStorage);
+
+    document.querySelectorAll('.pays-liste input[type="checkbox"]:not([disabled])').forEach(function(cb) {
+        cb.addEventListener('change', saveFormToStorage);
+    });
+
+    var form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            clearFormStorage();
+        });
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
+
+    restoreFormFromStorage();
 
     var allSlots = document.querySelectorAll('.slot-input');
     var statut = document.querySelector('input[name="statut_actuel"]').value;
@@ -378,9 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             wrapper.appendChild(cadenas);
-
         }
-
 
         slot.addEventListener('click', function(e) {
             if (e.target.tagName === 'INPUT') return;
@@ -415,6 +507,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.pays-liste input[type="checkbox"]').forEach(function(cb) {
         cb.addEventListener('change', checkPublishButton);
     });
+
+    bindFormPersistence();
 
     updateOnglets();
     ['france', 'uk', 'italy', 'spain'].forEach(updateCounter);
