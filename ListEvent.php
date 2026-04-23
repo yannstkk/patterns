@@ -48,7 +48,7 @@ $events = getListEvent();
         <tbody id="corps-tableau">
         <?php foreach ($events as $e): ?>
         <?php
-            $fStart  = !empty($e['date_debut']) ? date('d/m/y', strtotime($e['date_debut']))  : '-';
+            $fStart = !empty($e['date_debut']) ? date('d/m/y', strtotime($e['date_debut']))  : '-';
             $fResult = !empty($e['date_winner']) ? date('d/m/y', strtotime($e['date_winner'])) : '-';
             $fEnd = !empty($e['date_fin']) ? date('d/m/y', strtotime($e['date_fin']))    : '-';
 
@@ -84,7 +84,7 @@ $events = getListEvent();
             <td class="cell-center"><?= $fResult ?></td>
             <td class="cell-center"><?= $fEnd ?></td>
             <td class="cell-center"><?= htmlspecialchars($countryDisplay) ?></td>
-            <td class="cell-status"><span class="status-badge <?= $badgeClass ?>"><?= $badgeLabel ?></span></td>
+            <td class="cell-status"><span class="status-badge <?= $badgeClass ?>" ><?= $badgeLabel ?></span></td>
             <td class="cell-actions">
                 <a href="<?= htmlspecialchars($e['supplement_url'] ?? '#') ?>" target="_blank" title="View">
                     <img src="./img/webIcon.png" alt="View" style="width:17px;">

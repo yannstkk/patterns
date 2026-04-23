@@ -20,9 +20,12 @@ if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
 
 $tmpPath = $_FILES['image']['tmp_name'];
 $finfo = new finfo(FILEINFO_MIME_TYPE);
-if ($finfo->file($tmpPath) !== 'image/png') {
+$mimeType = $finfo->file($tmpPath);
+
+$allowedMimes = ['image/png', 'image/jpeg'];
+if (!in_array($mimeType, $allowedMimes)) {
     ob_end_clean();
-    echo json_encode(['success' => false, 'error' => 'File must be PNG']);
+    echo json_encode(['success' => false, 'error' => 'File must be PNG or JPEG']);
     exit;
 }
 
@@ -36,18 +39,25 @@ $pays = preg_replace('/[^a-z]/', '', strtolower($_POST['pays'] ?? ''));
 $slotIndex = (int)($_POST['slot_index'] ?? 0);
 $siteName = preg_replace('/[^a-zA-Z0-9]/', '', $_POST['site_name'] ?? 'SITE');
 $loginLogout = in_array($_POST['login_logout'] ?? '', ['login', 'logout']) ? $_POST['login_logout'] : 'na';
+$section = ($_POST['section'] ?? 'main') === 'result' ? 'result' : 'main';
 $originalName = preg_replace('/[^a-z0-9\-]/', '', strtolower($_POST['original_name'] ?? 'image'));
 
-$filename  = strtoupper($siteName) . '-' . $loginLogout . '-' . $eventId . '-' . $originalName . '.webp';
+$filename = strtoupper($siteName) . '-' . $loginLogout . '-' . $eventId . '-' . $section . '-' . $pays . '-' . $originalName . '.webp';
 $uploadDir = __DIR__ . '/../uploads/';
 if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
 
-$srcImage = imagecreatefrompng($tmpPath);
+if ($mimeType === 'image/png') {
+    $srcImage = imagecreatefrompng($tmpPath);
+} else {
+    $srcImage = imagecreatefromjpeg($tmpPath);
+}
+
 if (!$srcImage) {
     ob_end_clean();
-    echo json_encode(['success' => false, 'error' => 'Failed to read PNG']);
+    echo json_encode(['success' => false, 'error' => 'Failed to read image']);
     exit;
 }
+
 imagealphablending($srcImage, true);
 imagesavealpha($srcImage, true);
 $saved = imagewebp($srcImage, $uploadDir . $filename, 90);
@@ -68,8 +78,7 @@ try {
         $cnx->prepare("UPDATE image_events SET name_image = :name WHERE id = :iid")
             ->execute([':name' => $filename, ':iid' => $row['id']]);
     } else {
-        $cnx->prepare("INSERT INTO image_events (id_event, name_image, pays, slot_index, checked) 
-                       VALUES (:id, :name, :pays, :slot, 0)")
+        $cnx->prepare("INSERT INTO image_events (id_event, name_image, pays, slot_index, checked) VALUES (:id, :name, :pays, :slot, 0)")
             ->execute([':id' => $eventId, ':name' => $filename, ':pays' => $pays, ':slot' => $slotIndex]);
     }
 } catch (PDOException $e) {

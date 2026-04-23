@@ -164,14 +164,14 @@ $saveBtnDisabled = '';
 
         <div class="ligne">
             <label>Event type :</label>
-            <select name="type_event" <?= $statut === 'prod' ? 'disabled style="background:#e9e9e9;color:#888;cursor:not-allowed;"' : '' ?>>
-                <?php foreach (['Fun Month', 'Donnation'] as $opt): ?>
+            <select name="type_event" <?= $eventId ? 'disabled style="background:#e9e9e9;color:#888;cursor:not-allowed;"' : '' ?>>
+                <?php foreach (['Fun Month', 'Gift'] as $opt): ?>
                     <option value="<?= $opt ?>" <?= ($rep['type_event'] ?? '') === $opt ? 'selected' : '' ?>>
                         <?= $opt ?>
                     </option>
                 <?php endforeach; ?>
             </select>
-            <?php if ($statut === 'prod'): ?>
+            <?php if ($eventId): ?>
                 <input type="hidden" name="type_event" value="<?= htmlspecialchars($rep['type_event'] ?? '') ?>">
             <?php endif; ?>
         </div>
@@ -212,8 +212,6 @@ $saveBtnDisabled = '';
                 <span class="error"><?= $errors['result_date'] ?></span>
             <?php endif; ?>
         </div>
- 
-
 
         <div class="ligne">
             <label class="<?= isset($errors['end_date']) ? 'error' : '' ?>">Event end :</label>
@@ -283,66 +281,63 @@ $saveBtnDisabled = '';
                 <button type="button" class="onglet" id="onglet-spain" style="display:none" onclick="chargeOnglet('spain', this)">
                     Spanish (<span id="compteur-spain">0</span>)
                 </button>
-            </div>  
-            
-
-            
+            </div>
 
             <p id="message-aucun-pays" style="color:#999;font-style:italic;">Please select at least one country</p>
 
             <div class="contenu" id="france">
                 <h3>Main display</h3>
                 <div class="grille">
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">P 220x181 (Co et Deco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="P"    data-mode="logInOut" <?= $hFR ?>><div class="slot-label">P 220x181 (Co et Deco) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="220x181"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">DCM 298x130 (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="DCM"  data-mode="logIN"    <?= $hFR ?>><div class="slot-label">DCM 298x130 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="298x130"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">DCM 428x125 (log out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="DCM"  data-mode="logout"   <?= $hFR ?>><div class="slot-label">DCM 428x125 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="428x125"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">TDP 500x400 (log out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="TDP"  data-mode="logout"   <?= $hFR ?>><div class="slot-label">TDP 500x400 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="500x400"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">TDP ?x? (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="TDP"  data-mode="logIN"    <?= $hFR ?>><div class="slot-label">TDP ?x? (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">AP 455x184 (Co et Deco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="AP"   data-mode="logInOut" <?= $hFR ?>><div class="slot-label">AP 455x184 (Co et Deco) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="APPS" data-mode=""         <?= $hFR ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (log in/out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="FCT"  data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (log in/out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="TRY"  data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="RS"   data-mode="logout"   <?= $hOTH ?>><div class="slot-label">RS 455x184 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="RS"   data-mode="logIN"    <?= $hOTH ?>><div class="slot-label">RS 455x184 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">APPS 620x180 (Others) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="APPS" data-mode=""         <?= $hOTH ?>><div class="slot-label">APPS 620x180 (Others) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
                 <h3>Display results</h3>
                 <div class="grille">
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">P 220x181 (Co et Deco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="P"    data-mode="logInOut" <?= $hFR ?>><div class="slot-label">P 220x181 (Co et Deco) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="220x181"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">DCM 298x130 (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="DCM"  data-mode="logIN"    <?= $hFR ?>><div class="slot-label">DCM 298x130 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="298x130"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">DCM 428x125 (log out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="DCM"  data-mode="logout"   <?= $hFR ?>><div class="slot-label">DCM 428x125 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="428x125"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">TDP 500x400 (log out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="TDP"  data-mode="logout"   <?= $hFR ?>><div class="slot-label">TDP 500x400 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="500x400"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">TDP ?x? (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="TDP"  data-mode="logIN"    <?= $hFR ?>><div class="slot-label">TDP ?x? (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">AP 455x184 (Co et Deco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="AP"   data-mode="logInOut" <?= $hFR ?>><div class="slot-label">AP 455x184 (Co et Deco) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="france" <?= $hFR ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="france" data-site="APPS" data-mode=""         <?= $hFR ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (log in/out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="FCT"  data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (log in/out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="TRY"  data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="RS"   data-mode="logout"   <?= $hOTH ?>><div class="slot-label">RS 455x184 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="RS"   data-mode="logIN"    <?= $hOTH ?>><div class="slot-label">RS 455x184 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">APPS 620x180 (Others) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="APPS" data-mode=""         <?= $hOTH ?>><div class="slot-label">APPS 620x180 (Others) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
             </div>
@@ -350,98 +345,116 @@ $saveBtnDisabled = '';
             <div class="contenu" id="uk">
                 <h3>Main display</h3>
                 <div class="grille">
-                   <div class="slot" data-source="uk" <?= $hUK ?> data-site="SurveyFriends" data-mode="logInOut"><div class="slot-label">Survey Friends 870x310 (log in/out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="SurveyFriends" data-mode="logInOut"><div class="slot-label">Survey Friends 870x310 (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="870x310"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PFG" data-mode="logout" ><div class="slot-label">PFG (Déco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PFG" data-mode="logout"><div class="slot-label">PFG (Déco) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PFG" data-mode="logIN" ><div class="slot-label">PFG (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PFG" data-mode="logIN"><div class="slot-label">PFG (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="MDO" data-mode="logIN"><div class="slot-label">MDO 298x130 (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="MDO" data-mode="logIN"><div class="slot-label">MDO 298x130 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="298x130"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="MDO" data-mode="logout" ><div class="slot-label">MDO (Déco) 428x125 <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="MDO" data-mode="logout"><div class="slot-label">MDO (Déco) 428x125 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="428x125"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PPT" data-mode="logout" ><div class="slot-label">PPT testing 500x400 (Déco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PPT" data-mode="logout"><div class="slot-label">PPT testing 500x400 (Déco) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="500x400"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PPT" data-mode="login" ><div class="slot-label">PPT ?x? (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PPT" data-mode="login"><div class="slot-label">PPT ?x? (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="AP" data-mode="logout" ><div class="slot-label">AP 455x184 <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="AP" data-mode="logout"><div class="slot-label">AP 455x184 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="APPS" data-mode="logout" ><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?</span></div>
-                        <div class="slot-input" data-size="620x180" ><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="APPS" data-mode="logout"><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="others" data-site="FCT" data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="others" data-site="TRY" data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="others" data-site="RS" data-mode="logout" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="others" data-site="RS" data-mode="logIN" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="others" data-site="APPS" data-mode="" <?= $hOTH ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
                 <h3>Display results</h3>
                 <div class="grille">
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="SurveyFriends" data-mode="logInOut"><div class="slot-label">Survey Friends 870x310 (log in/out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="SurveyFriends" data-mode="logInOut"><div class="slot-label">Survey Friends 870x310 (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="870x310"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PFG" data-mode="logout" ><div class="slot-label">PFG (Déco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PFG" data-mode="logout"><div class="slot-label">PFG (Déco) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PFG" data-mode="logIN" ><div class="slot-label">PFG (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PFG" data-mode="logIN"><div class="slot-label">PFG (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="MDO" data-mode="logIN"><div class="slot-label">MDO 298x130 (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="MDO" data-mode="logIN"><div class="slot-label">MDO 298x130 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="298x130"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="MDO" data-mode="logout" ><div class="slot-label">MDO (Déco) 428x125 <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="MDO" data-mode="logout"><div class="slot-label">MDO (Déco) 428x125 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="428x125"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PPT" data-mode="logout" ><div class="slot-label">PPT testing 500x400 (Déco) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PPT" data-mode="logout"><div class="slot-label">PPT testing 500x400 (Déco) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="500x400"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PPT" data-mode="login" ><div class="slot-label">PPT ?x? (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="PPT" data-mode="login"><div class="slot-label">PPT ?x? (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="AP" data-mode="logout" ><div class="slot-label">AP 455x184 <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="AP" data-mode="logout"><div class="slot-label">AP 455x184 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="APPS" data-mode="logout" ><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?</span></div>
-                        <div class="slot-input" data-size="620x180" ><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="uk" <?= $hUK ?> data-site="APPS" data-mode="logout"><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="others" data-site="FCT" data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="others" data-site="TRY" data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="others" data-site="RS" data-mode="logout" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="others" data-site="RS" data-mode="logIN" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
+                    <div class="slot" data-source="others" data-site="APPS" data-mode="" <?= $hOTH ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
+                        <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
             </div>
-
-
 
             <div class="contenu" id="italy">
                 <h3>Main display test</h3>
                 <div class="grille">
-                    <div class="slot" data-source="italy" data-site="RS" data-mode="logout"><div class="slot-label">RS 620x180 (log out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="italy" data-site="RS"   data-mode="logout"><div class="slot-label">RS 620x180 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="italy" data-site="APPS" data-mode="login" ><div class="slot-label">APPS 620x180 (log in)  <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="italy" data-site="APPS" data-mode="login" ><div class="slot-label">APPS 620x180 (log in)  <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
-                <h3>Display results test </h3>
+                <h3>Display results test</h3>
                 <div class="grille">
-                    <div class="slot" data-source="italy" data-site="p" data-mode="logout"><div class="slot-label">P 620x180 (log out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="italy" data-site="P"   data-mode="logout"><div class="slot-label">P 620x180 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="italy" data-site="MOD" data-mode="login"><div class="slot-label">MOD 620x180 (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="italy" data-site="MOD" data-mode="login"><div class="slot-label">MOD 620x180 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
             </div>
 
-
             <div class="contenu" id="spain">
                 <h3>Main display</h3>
                 <div class="grille">
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (log in/out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="FCT"  data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (log in/out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="TRY"  data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="RS"   data-mode="logout"   <?= $hOTH ?>><div class="slot-label">RS 455x184 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="RS"   data-mode="logIN"    <?= $hOTH ?>><div class="slot-label">RS 455x184 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="APPS" data-mode=""         <?= $hOTH ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
                 <h3>Display results</h3>
                 <div class="grille">
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (log in/out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="FCT"  data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">FCT ? x ? (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (log in/out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="TRY"  data-mode="logInOut" <?= $hOTH ?>><div class="slot-label">TRY (Taille à def) (log in/out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log out) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="RS"   data-mode="logout"   <?= $hOTH ?>><div class="slot-label">RS 455x184 (log out) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">RS 455x184 (log in) <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="RS"   data-mode="logIN"    <?= $hOTH ?>><div class="slot-label">RS 455x184 (log in) <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-                    <div class="slot" data-source="others" <?= $hOTH ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?</span></div>
+                    <div class="slot" data-source="others" data-site="APPS" data-mode=""         <?= $hOTH ?>><div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="../img/banner1.png" class="banner-preview"></span></div>
                         <div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
                 </div>
             </div>
 
         </div>
+
 
         <div class="boutons">
             <button type="submit" name="action" value="save" class="btn-save" <?= $saveBtnDisabled ?>>Save</button>
@@ -457,9 +470,9 @@ $saveBtnDisabled = '';
 </div>
 
 <script>
-    var savedImages   = <?= json_encode($_SESSION['images'] ?? []) ?>;
+    var savedImages = <?= json_encode($_SESSION['images'] ?? []) ?>;
     var checkedImages = <?= json_encode($_SESSION['checked_images'] ?? []) ?>;
-    var eventId       = <?= json_encode($_SESSION['event_id'] ?? null) ?>;
+    var eventId = <?= json_encode($_SESSION['event_id'] ?? null) ?>;
 </script>
 <script src="./js/script.js"></script>
 </body>

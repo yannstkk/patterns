@@ -43,7 +43,7 @@ if ($step === 1) {
 
     if (!empty($errors)) {
         $_SESSION['step'] = $step;
-        header('Location: ' . $_SERVER['HTTP_REFERER']);
+        header('Location: ../index.php?page=AddEvent');
         exit;
     }
 
@@ -64,10 +64,14 @@ if ($step === 1) {
     }
 
     unset($_SESSION['step']);
-    header('Location: ../index.php?page=AddEvent');
+    $typeEvent = trim($_POST['type_event'] ?? 'Fun Month');
+    if ($typeEvent === 'Gift') {
+        header('Location: ../index.php?page=AddEventGift');
+    } else {
+        header('Location: ../index.php?page=AddEvent');
+    }
     exit;
 }
- 
 
 if (empty(trim($_POST['nom_projet'] ?? ''))) {
     $errors['nom_projet'] = 'The project name is required';
@@ -88,17 +92,29 @@ if (empty($endDate)) {
 if (empty($errors)) {
     $formatLaunch = DateTime::createFromFormat('Y-m-d', $launchingDate);
     $formatResult = DateTime::createFromFormat('Y-m-d', $resultDate);
-    $formatEnd = DateTime::createFromFormat('Y-m-d', $endDate);
+    $formatEnd    = DateTime::createFromFormat('Y-m-d', $endDate);
 
     if (!$formatLaunch) $errors['launching_date'] = 'Invalid launch date format';
-    if (!$formatResult) $errors['result_date'] = 'Invalid result date format';
-    if (!$formatEnd) $errors['end_date'] = 'Invalid end date format';
+    if (!$formatResult) $errors['result_date']     = 'Invalid result date format';
+    if (!$formatEnd)    $errors['end_date']         = 'Invalid end date format';
 
     if (empty($errors)) {
         $today = new DateTime();
         $today->setTime(0, 0, 0);
 
-        if (!$isEdit && $formatLaunch < $today) {
+        $originalLaunch = null;
+        if ($isEdit && $eventId) {
+            $stmtOrig = $cnx->prepare("SELECT date_debut FROM config_event WHERE ID = :id LIMIT 1");
+            $stmtOrig->execute([':id' => $eventId]);
+            $rowOrig = $stmtOrig->fetch(PDO::FETCH_ASSOC);
+            if ($rowOrig && !empty($rowOrig['date_debut'])) {
+                $originalLaunch = DateTime::createFromFormat('Y-m-d', date('Y-m-d', strtotime($rowOrig['date_debut'])));
+            }
+        }
+
+        $launchDateChanged = !$isEdit || !$originalLaunch || $formatLaunch->format('Y-m-d') !== $originalLaunch->format('Y-m-d');
+
+        if ($launchDateChanged && $formatLaunch < $today) {
             $errors['launching_date'] = "The launch date can't be before today";
         }
         if ($formatLaunch >= $formatResult) {
@@ -137,7 +153,7 @@ $_SESSION['errors'] = $errors;
 
 if (!empty($errors)) {
     $_SESSION['step'] = $step;
-    header('Location: '.$_SERVER['HTTP_REFERER']);
+    header('Location: ../index.php?page=AddEvent');
     exit;
 }
 
@@ -153,7 +169,7 @@ if ($action === 'pre-publish' && $eventId) {
         'end_date' => $endDate,
         'pays_list' => $paysEffectifs,
     ];
-    saveEvent($data, $eventId, $nouvelEtat);  
+    saveEvent($data, $eventId, $nouvelEtat);
 
     $_SESSION['statut']   = $nouvelEtat;
     $_SESSION['reponses'] = array_merge($_SESSION['reponses'], $data);
@@ -177,8 +193,6 @@ if ($id) {
     $_SESSION['statut'] = $statutActuel;
     $_SESSION['reponses'] = array_merge($_SESSION['reponses'], $data);
 }
-
-
 
 unset($_SESSION['step']);
 header('Location: ../index.php?page=AddEvent');
