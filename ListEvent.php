@@ -30,6 +30,8 @@ $events = getListEvent();
         <a href="index.php?page=AddEvent&new=1" class="btn-add">+Add an event</a>
     </div>
 
+
+
     
     <table class="list-table">
         <thead>
@@ -89,12 +91,13 @@ $events = getListEvent();
                 <a href="<?= htmlspecialchars($e['supplement_url'] ?? '#') ?>" target="_blank" title="View">
                     <img src="./img/webIcon.png" alt="View" style="width:17px;">
                 </a>
-                <a href="index.php?page=AddEvent&edit=<?= (int)$e['ID'] ?>" title="Edit">
+                <?php $editPage = ($e['type_event'] === 'Gift') ? 'AddEventGift' : 'AddEvent'; ?>
+                <a href="index.php?page=<?= $editPage ?>&edit=<?= (int)$e['ID'] ?>" title="Edit">
                     <img src="./img/editIcon.png" alt="Edit" style="width:17px;">
                 </a>
                 <?php if ($etat === 'draft'): ?>
                 <a href="validation/deleteEvent.php?id=<?= (int)$e['ID'] ?>"
-                   onclick="return confirm('Delete this event?')" title="Delete">
+                onclick="return confirm('Delete this event?')" title="Delete">
                     <img src="./img/deleteIcon.png" alt="Delete" style="width:17px;">
                 </a>
                 <?php endif; ?>
