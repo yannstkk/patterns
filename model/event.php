@@ -27,12 +27,13 @@ function saveEvent(array $data, $eventId = null, $etat = 'draft') {
     $params = [
         ':titre' => $data['nom_projet'],
         ':type_event' => $data['type_event'],
-        ':supplement_url'=> $data['link'],
+        ':supplement_url' => $data['link'],
         ':date_debut' => !empty($data['launching_date']) ? $data['launching_date'] : null,
-        ':date_winner' => !empty($data['result_date'])    ? $data['result_date']    : null,
-        ':date_fin' => !empty($data['end_date'])       ? $data['end_date']       : null,
-        ':langue' => $langue,
-        ':etat_event' => $etat,
+        ':date_winner'=> !empty($data['result_date'])    ? $data['result_date']    : null,
+        ':date_fin'=> !empty($data['end_date']) ? $data['end_date']       : null,
+        ':date_close'=> !empty($data['close_date']) ? $data['close_date']     : null,
+        ':langue'=> $langue,
+        ':etat_event'=> $etat,
     ];
 
     try {
@@ -42,7 +43,7 @@ function saveEvent(array $data, $eventId = null, $etat = 'draft') {
                 UPDATE config_event SET
                     titre = :titre, type_event = :type_event, supplement_url = :supplement_url,
                     date_debut = :date_debut, date_winner = :date_winner, date_fin = :date_fin,
-                    langue = :langue, etat_event = :etat_event
+                    date_close = :date_close, langue = :langue, etat_event = :etat_event
                 WHERE ID = :id
             ");
             $stmt->execute($params);
@@ -51,9 +52,9 @@ function saveEvent(array $data, $eventId = null, $etat = 'draft') {
             $params[':etat_event'] = 'draft';
             $stmt = $cnx->prepare("
                 INSERT INTO config_event
-                    (titre, type_event, supplement_url, date_debut, date_winner, date_fin, langue, etat_event)
+                    (titre, type_event, supplement_url, date_debut, date_winner, date_fin, date_close, langue, etat_event)
                 VALUES
-                    (:titre, :type_event, :supplement_url, :date_debut, :date_winner, :date_fin, :langue, :etat_event)
+                    (:titre, :type_event, :supplement_url, :date_debut, :date_winner, :date_fin, :date_close, :langue, :etat_event)
             ");
             $stmt->execute($params);
             return $cnx->lastInsertId();
@@ -119,37 +120,40 @@ function saveGiftPhaseText(int $eventId, string $association, array $phases): bo
         $params = [
             ':id_event' => $eventId,
             ':association' => $association,
-            ':col_introduction'    => $phases['collection']['introduction'] ?? '',
+            ':col_intro' => $phases['collection']['introduction']      ?? '',
             ':col_about' => $phases['collection']['about_association'] ?? '',
-            ':pre_introduction' => $phases['pre-donation']['introduction']    ?? '',
+            ':pre_intro' => $phases['pre-donation']['introduction']    ?? '',
             ':pre_about' => $phases['pre-donation']['about_association'] ?? '',
-            ':post_introduction' => $phases['post-donation']['introduction']   ?? '',
+            ':post_intro' => $phases['post-donation']['introduction']   ?? '',
             ':post_about' => $phases['post-donation']['about_association'] ?? '',
         ];
 
         if ($row) {
             $params[':id'] = $row['id'];
+            unset($params[':id_event']);
+            
             $stmt = $cnx->prepare("
                 UPDATE gift_event_config SET
                     association = :association,
-                    col_introduction = :col_introduction,
+                    col_introduction = :col_intro,
                     col_about_association = :col_about,
-                    pre_introduction = :pre_introduction,
+                    pre_introduction = :pre_intro,
                     pre_about_association = :pre_about,
-                    post_introduction = :post_introduction,
+                    post_introduction = :post_intro,
                     post_about_association = :post_about
                 WHERE id = :id
             ");
         } else {
+            unset($params[':id']);
             $stmt = $cnx->prepare("
                 INSERT INTO gift_event_config
                     (id_event, association, col_introduction, col_about_association,
                      pre_introduction, pre_about_association,
                      post_introduction, post_about_association)
                 VALUES
-                    (:id_event, :association, :col_introduction, :col_about,
-                     :pre_introduction, :pre_about,
-                     :post_introduction, :post_about)
+                    (:id_event, :association, :col_intro, :col_about,
+                     :pre_intro, :pre_about,
+                     :post_intro, :post_about)
             ");
         }
         return $stmt->execute($params);
@@ -161,14 +165,15 @@ function saveGiftPhaseText(int $eventId, string $association, array $phases): bo
 
 
 
+
 function updateGiftAsset(int $eventId, string $phase, string $assetCol, string $filename): bool {
     global $cnx;
 
     $colMap = [
         'logo' => 'logo',
         'arriere_plan' => 'arriere_plan',
-        'collection_image1'    => 'col_image1',
-        'collection_image2'    => 'col_image2',
+        'collection_image1' => 'col_image1',
+        'collection_image2' => 'col_image2',
         'pre-donation_image1'  => 'pre_image1',
         'pre-donation_image2'  => 'pre_image2',
         'post-donation_image1' => 'post_image1',

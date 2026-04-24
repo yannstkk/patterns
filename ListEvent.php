@@ -31,7 +31,6 @@ $events = getListEvent();
     </div>
 
 
-
     
     <table class="list-table">
         <thead>
@@ -64,6 +63,12 @@ $events = getListEvent();
             if (empty($countryDisplay)) $countryDisplay = '-';
 
             $etat = $e['etat_event'] ?? 'draft';
+
+
+            if (!empty($e['date_close']) && new DateTime() >= new DateTime($e['date_close'])) {
+                $etat = 'close';
+            }
+
             if ($etat === 'pre-prod') {
                 $badgeClass = 'status-preprod';
                 $badgeLabel = 'Pre-prod';

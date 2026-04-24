@@ -1,12 +1,12 @@
 <?php
 session_start();
-include_once __DIR__ . '/../model/event.php';
+include_once __DIR__.'/../model/event.php';
 
-$action = $_POST['action']         ?? '';
+$action = $_POST['action'] ?? '';
 $statutActuel = $_POST['statut_actuel']  ?? 'draft';
-$step = (int)($_POST['step']     ?? 1);
-$eventId = $_SESSION['event_id']    ?? null;
-$previousRep  = $_SESSION['reponses']    ?? [];
+$step = (int)($_POST['step'] ?? 1);
+$eventId = $_SESSION['event_id'] ?? null;
+$previousRep  = $_SESSION['reponses'] ?? [];
 $errors = [];
 
 if ($step === 1) {
@@ -15,7 +15,7 @@ if ($step === 1) {
     }
 
     $_SESSION['reponses'] = array_merge($previousRep, $_POST);
-    $_SESSION['errors']   = $errors;
+    $_SESSION['errors'] = $errors;
 
     if (!empty($errors)) {
         $_SESSION['step'] = $step;
@@ -56,22 +56,30 @@ if (empty(trim($_POST['link'] ?? ''))) {
     $errors['link'] = 'The event link is required';
 }
 
-$launchingDate = trim($_POST['launching_date']    ?? '');
+$launchingDate = trim($_POST['launching_date'] ?? '');
 $preDonationDate = trim($_POST['pre_donation_date']  ?? '');
 $postDonationDate= trim($_POST['post_donation_date'] ?? '');
+$closeDate = trim($_POST['close_date'] ?? '');
 
-if (empty($launchingDate))    $errors['launching_date']    = 'The launch collection phase date is required';
+if (empty($launchingDate)) $errors['launching_date'] = 'The launch collection phase date is required';
 if (empty($preDonationDate))  $errors['pre_donation_date'] = 'The pre-donation handover date is required';
 if (empty($postDonationDate)) $errors['post_donation_date']= 'The post-donation handover date is required';
+
+
+
 
 if (empty($errors)) {
     $fLaunch = DateTime::createFromFormat('Y-m-d', $launchingDate);
     $fPre = DateTime::createFromFormat('Y-m-d', $preDonationDate);
     $fPost = DateTime::createFromFormat('Y-m-d', $postDonationDate);
+    $fClose = DateTime::createFromFormat('Y-m-d', $closeDate);
 
-    if (!$fLaunch) $errors['launching_date']    = 'Invalid date format';
+
+    if (!$fLaunch) $errors['launching_date'] = 'Invalid date format';
     if (!$fPre) $errors['pre_donation_date']  = 'Invalid date format';
     if (!$fPost) $errors['post_donation_date'] = 'Invalid date format';
+    if (!$fClose) $errors['close_date'] = 'Invalid date format';
+    
 
     if (empty($errors)) {
         $today = new DateTime();
@@ -98,6 +106,9 @@ if (empty($errors)) {
         if ($fPre >= $fPost) {
             $errors['post_donation_date'] = 'The post-donation date must be after the pre-donation date';
         }
+        if ($fPost && $fClose <= $fPost) {
+            $errors['close_date'] = 'The close date must be after the post-donation date';
+        }
     }
 }
 
@@ -106,7 +117,7 @@ if (empty(trim($_POST['pays'] ?? ''))) {
 }
 
 $paysValue  = trim($_POST['pays'] ?? 'france');
-$langMap    = ['france' => 'fr', 'uk' => 'en', 'italy' => 'it', 'others' => 'others'];
+$langMap = ['france' => 'fr', 'uk' => 'en', 'italy' => 'it', 'others' => 'others'];
 $association= trim($_POST['association'] ?? '');
 $activePhase= $_POST['active_phase'] ?? 'collection';
 
@@ -117,6 +128,7 @@ $_SESSION['reponses'] = array_merge($previousRep, [
     'launching_date' => $launchingDate,
     'pre_donation_date' => $preDonationDate,
     'post_donation_date'=> $postDonationDate,
+    'close_date' => $closeDate,
     'pays' => $paysValue,
     'association' => $association,
     'active_phase' => $activePhase,
@@ -135,21 +147,32 @@ $data = [
     'type_event' => 'Gift',
     'link' => trim($_POST['link']),
     'launching_date' => $launchingDate,
-    'result_date' => $preDonationDate,   
-    'end_date' => $postDonationDate,  
+    'result_date' => $preDonationDate,
+    'close_date' => $closeDate,
+    'end_date' => $postDonationDate,
     'pays_list' => [$paysValue],
 ];
+
+$phasesPost = $_POST['phases'] ?? [];
+saveGiftPhaseText((int)$eventId, $association, $phasesPost);
+
+if ($action === 'pre-publish' && $eventId) {
+    $nouvelEtat = $statutActuel === 'draft' ? 'pre-prod' : ($statutActuel === 'pre-prod' ? 'prod' : $statutActuel);
+    $id = saveEvent($data, $eventId, $nouvelEtat);
+    $_SESSION['statut'] = $nouvelEtat;
+    $_SESSION['reponses'] = array_merge($_SESSION['reponses'], $data);
+    if ($id) $_SESSION['event_id'] = $id;
+    unset($_SESSION['step']);
+    header('Location: ../index.php?page=AddEventGift');
+    exit;
+}
+
 $id = saveEvent($data, $eventId, $statutActuel);
 if ($id) {
     $_SESSION['event_id'] = $id;
     $_SESSION['statut']   = $statutActuel;
+    $_SESSION['reponses'] = array_merge($_SESSION['reponses'], $data);
 }
-
-
-$phasesPost = $_POST['phases'] ?? [];
-error_log('PHASES POST: ' . print_r($phasesPost, true));
-
-saveGiftPhaseText((int)$id, $association, $phasesPost);
 
 unset($_SESSION['step']);
 header('Location: ../index.php?page=AddEventGift');

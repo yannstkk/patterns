@@ -82,7 +82,7 @@ try {
             ->execute([':id' => $eventId, ':name' => $filename, ':pays' => $pays, ':slot' => $slotIndex]);
     }
 } catch (PDOException $e) {
-    error_log('image_events insert error: ' . $e->getMessage());
+    error_log('image_events insert error: '.$e->getMessage());
 }
 
 $_SESSION['images'][$pays][$slotIndex] = $filename;
