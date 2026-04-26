@@ -241,6 +241,8 @@ foreach ($allPhases as $ph):
     <?php endif; ?>
 </div>
 
+
+
 <div class="phase-tabs">
     <?php foreach ($allPhases as $ph): 
         $phId = str_replace('-', '_', $ph);
@@ -375,6 +377,8 @@ foreach ($allPhases as $ph):
         <button type="button" class="onglet" id="onglet-italy"  style="display:none" onclick="chargeGiftOnglet('italy', this)">Italian (<span id="compteur-italy">0</span>)</button>
         <button type="button" class="onglet" id="onglet-others" style="display:none" onclick="chargeGiftOnglet('others', this)">Others (<span id="compteur-others">0</span>)</button>
     </div>
+
+   
 
     <div class="contenu actif" id="france">
         <h3>Main display</h3>

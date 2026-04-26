@@ -51,7 +51,7 @@ $events = getListEvent();
         <?php
             $fStart = !empty($e['date_debut']) ? date('d/m/y', strtotime($e['date_debut']))  : '-';
             $fResult = !empty($e['date_winner']) ? date('d/m/y', strtotime($e['date_winner'])) : '-';
-            $fEnd = !empty($e['date_fin']) ? date('d/m/y', strtotime($e['date_fin']))    : '-';
+            $fEnd = !empty($e['date_fin']) ? date('d/m/y', strtotime($e['date_fin'])) : '-';
 
             $langMap = ['fr'=>'FR','en'=>'EN','it'=>'IT','es'=>'ES','others'=>'ES',
                         'france'=>'FR','uk'=>'EN','italy'=>'IT','spain'=>'ES'];

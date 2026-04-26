@@ -5,30 +5,33 @@ var urlsPreProd = {
     'AP': {login: 'https://preprod.avispanel.com/', logout: 'https://preprod.avispanel.com/'},
     'APPS': {login: '', logout: ''},
     'FCT': {login: 'https://preprod.free-cosmetic-testing.com/', logout: 'https://preprod.free-cosmetic-testing.com/'},
-    'TRY': {login: '', logout: ''},
-    'RS': {login: '', logout: ''},
+    'TRY': {login: 'https://preprod.trynewperfumes.com/', logout: 'https://preprod.trynewperfumes.com/'},
+    'RS': {login: 'https://preprod.rewardingsurveys.com/', logout: 'https://preprod.rewardingsurveys.com/'},
     'SurveyFriends': {login: 'https://preprod.surveyfriends.co.uk/', logout: 'https://preprod.surveyfriends.co.uk/'},
     'PFG': {login: 'https://preprod.paidfocusgroup.co.uk/', logout: 'https://preprod.paidfocusgroup.co.uk/'},
-    'MDO': {login: '', logout: ''},
+    'MDO': {login: 'https://preprod.mystery-shopper.com/', logout: 'https://preprod.mystery-shopper.com/'},
     'PPT': {login: 'https://preprod.paidproducttesting.co.uk/', logout: 'https://preprod.paidproducttesting.co.uk/'},
     'MOD': {login: '', logout: ''},
 };
 
+
 var urlsProd = {
-    'P': {login: 'https://preprod.pipeul.com/', logout: 'https://preprod.pipeul.com/'},
-    'DCM': {login: 'https://preprod.devenirclientmystere.com/', logout: 'https://preprod.devenirclientmystere.com/'},
-    'TDP': {login: 'https://preprod.testerdesproduits.fr/', logout: 'https://preprod.testerdesproduits.fr/'},
-    'AP': {login: 'https://preprod.avispanel.com/', logout: 'https://preprod.avispanel.com/'},
+    'P': {login: 'https://pipeul.com/', logout: 'https://pipeul.com/'},
+    'DCM': {login: 'https://devenirclientmystere.com/', logout: 'https://devenirclientmystere.com/'},
+    'TDP': {login: 'https://testerdesproduits.fr/', logout: 'https://testerdesproduits.fr/'},
+    'AP': {login: 'https://avispanel.com/', logout: 'https://avispanel.com/'},
     'APPS': {login: '', logout: ''},
-    'FCT': {login: 'https://preprod.free-cosmetic-testing.com/', logout: 'https://preprod.free-cosmetic-testing.com/'},
-    'TRY': {login: '', logout: ''},
-    'RS': {login: '', logout: ''},
-    'SurveyFriends': {login: 'https://preprod.surveyfriends.co.uk/', logout: 'https://preprod.surveyfriends.co.uk/'},
-    'PFG': {login: 'https://preprod.paidfocusgroup.co.uk/', logout: 'https://preprod.paidfocusgroup.co.uk/'},
-    'MDO': {login: '', logout: ''},
-    'PPT': {login: 'https://preprod.paidproducttesting.co.uk/', logout: 'https://preprod.paidproducttesting.co.uk/'},
+    'FCT': {login: 'https://free-cosmetic-testing.com/', logout: 'https://free-cosmetic-testing.com/'},
+    'TRY': {login: 'https://trynewperfumes.com/', logout: 'https://trynewperfumes.com/'},
+    'RS': {login: 'https://rewardingsurveys.com/', logout: 'https://rewardingsurveys.com/'},
+    'SurveyFriends': {login: 'https://surveyfriends.co.uk/', logout: 'https://surveyfriends.co.uk/'},
+    'PFG': {login: 'https://paidfocusgroup.co.uk/', logout: 'https://paidfocusgroup.co.uk/'},
+    'MDO': {login: 'https://mystery-shopper.com/', logout: 'https://mystery-shopper.com/'},
+    'PPT': {login: 'https://paidproducttesting.co.uk/', logout: 'https://paidproducttesting.co.uk/'},
     'MOD': {login: '', logout: ''},
+
 };
+
 
 
 function chargeOnglet(id, bouton) {
