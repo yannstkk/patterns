@@ -4,7 +4,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL); 
 
 session_start();
-include_once __DIR__ . '/../model/event.php';
+include_once __DIR__.'/../model/event.php';
 
 ob_start();
 header('Content-Type: application/json');
@@ -61,7 +61,7 @@ $originalName = preg_replace('/[^a-z0-9\-]/', '', strtolower($_POST['original_na
 if ($originalName === '') $originalName = 'image';
 
 $phaseSlug = $isGlobal ? 'global' : preg_replace('/[^a-z]/', '', $phase);
-$filename  = 'GIFT-' . $assetType . '-' . (int)$eventId . '-' . $phaseSlug . '-' . $originalName . '.webp';
+$filename  = 'Donation-' . $assetType . '-' . (int)$eventId . '-' . $phaseSlug . '-' . $originalName . '.webp';
 
 $uploadDir = __DIR__ . '/../uploads/';
 if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);

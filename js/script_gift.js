@@ -9,6 +9,11 @@ var urlsProd = {
     'RS':{login:'',logout:''}
 };
 
+history.pushState(null, '', window.location.href);
+window.addEventListener('popstate', function () {
+    window.location.replace('index.php?page=ListEvent');
+});
+
 var phaseData = {
     'collection': { introduction: '', about_association: '', image1: '', image2: '' },
     'pre-donation':  { introduction: '', about_association: '', image1: '', image2: '' },
@@ -529,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
         slot.style.flex   = '1';
 
         var icon = document.createElement('img');
-        icon.src = './img/AddPngPicture.png';
+        icon.src = './config_event/img/AddPngPicture.png';
         icon.style.cssText = 'width:14px;height:15px;flex-shrink:0;pointer-events:none;';
         slot.appendChild(icon);
 

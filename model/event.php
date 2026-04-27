@@ -5,7 +5,7 @@ $cnx = connectBaseExterne_PDO(200);
 
 function getListEvent() {
     global $cnx;
-    $stmt = $cnx->prepare("SELECT * FROM config_event");
+    $stmt = $cnx->prepare("SELECT * FROM config_event where date_debut >  '2026-01-01'");
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }

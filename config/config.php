@@ -1,6 +1,6 @@
 <?php 
 
-include(__DIR__."/db.php");
+include("/var/config/connexion_all.php");
 
 
 $list_lang = [

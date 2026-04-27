@@ -10,7 +10,7 @@ if (isset($_GET['new'])) {
     $_SESSION['images'] = [];
     $_SESSION['is_edit'] = false;
     unset($_SESSION['step']);
-    header('Location: index.php?page=AddEventGift');
+    header('Location: ./index.php?menuprincipal=config_event&partie=AddEventGift');
     exit;
 }
 
@@ -34,18 +34,21 @@ if (isset($_GET['edit'])) {
         $_SESSION['is_edit']  = true;
         unset($_SESSION['step']);
 
-
         $giftConfigEdit = getGiftConfig($editId);
         $globalEditData = $giftConfigEdit['collection'] ?? (reset($giftConfigEdit) ?: []);
 
         $_SESSION['reponses'] = [
             'nom_projet' => $eventData['titre'] ?? '',
-            'type_event' => 'Gift',
+            'type_event' => 'Donation',
             'link' => $eventData['supplement_url'] ?? '',
-            'launching_date' => !empty($eventData['date_debut'])  ? date('Y-m-d', strtotime($eventData['date_debut']))  : '',
-            'pre_donation_date' => !empty($eventData['date_winner']) ? date('Y-m-d', strtotime($eventData['date_winner'])) : '',
-            'post_donation_date'=> !empty($eventData['date_fin']) ? date('Y-m-d', strtotime($eventData['date_fin']))    : '',
+            'launching_date' => !empty($eventData['date_debut']) ? date('Y-m-d', strtotime($eventData['date_debut'])) : '',
+            'launching_time' => !empty($eventData['date_debut']) ? date('H:i',   strtotime($eventData['date_debut'])) : '00:00',
+            'pre_donation_date'=> !empty($eventData['date_winner']) ? date('Y-m-d', strtotime($eventData['date_winner']))  : '',
+            'pre_donation_time'=> !empty($eventData['date_winner']) ? date('H:i',   strtotime($eventData['date_winner']))  : '00:00',
+            'post_donation_date'=> !empty($eventData['date_fin']) ? date('Y-m-d', strtotime($eventData['date_fin'])) : '',
+            'post_donation_time'=> !empty($eventData['date_fin']) ? date('H:i',   strtotime($eventData['date_fin'])) : '00:00',
             'close_date' => !empty($eventData['date_close']) ? date('Y-m-d', strtotime($eventData['date_close'])) : '',
+            'close_time' => !empty($eventData['date_close']) ? date('H:i',   strtotime($eventData['date_close'])) : '00:00',
             'pays' => $pays,
             'association' => $globalEditData['association'] ?? '',
             'active_phase' => 'collection',
@@ -71,13 +74,11 @@ $errors = $_SESSION['errors']   ?? [];
 $eventId = $_SESSION['event_id'] ?? null;
 
 $giftConfig = $eventId ? getGiftConfig($eventId) : [];
-
 $globalData = $giftConfig['collection'] ?? (reset($giftConfig) ?: []);
-$logoDisplay = $globalData['logo']        ?? '';
+$logoDisplay  = $globalData['logo'] ?? '';
 $arriereDisplay = $globalData['arriere_plan'] ?? '';
-$associationVal = $rep['association']         ?? $globalData['association'] ?? '';
-
-$activePhase = $rep['active_phase'] ?? 'collection';
+$associationVal = $rep['association'] ?? $globalData['association'] ?? '';
+$activePhase  = $rep['active_phase'] ?? 'collection';
 
 if (!empty($errors) && isset($_SESSION['step'])) {
     $step = (int)$_SESSION['step'];
@@ -88,11 +89,11 @@ if (!empty($errors) && isset($_SESSION['step'])) {
 
 $pays = $rep['pays'] ?? 'france';
 
-$allPhases = ['collection', 'pre-donation', 'post-donation'];
+$allPhases   = ['collection', 'pre-donation', 'post-donation'];
 $phaseLabels = [
-    'collection'   => 'Collection phase',
-    'pre-donation' => 'Pre-donation',
-    'post-donation'=> 'Post-donation',
+    'collection'    => 'Collection phase',
+    'pre-donation'  => 'Pre-donation',
+    'post-donation' => 'Post-donation',
 ];
 ?>
 <!DOCTYPE html>
@@ -100,9 +101,20 @@ $phaseLabels = [
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Add an Event - Gift</title>
-<link rel="stylesheet" href="./css/style.css">
-<link rel="stylesheet" href="./css/style_gift.css">
+<title>Add an Event Donation</title>
+<link rel="stylesheet" href="./config_event/css/style.css">
+<link rel="stylesheet" href="./config_event/css/style_gift.css">
+
+<style>
+    .date-time-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .date-time-group input[type="time"] {
+        width: 100px;
+    }
+</style>
 </head>
 <body>
 <div class="page">
@@ -115,17 +127,13 @@ $phaseLabels = [
     </div>
 </div>
 
- 
-
-<form method="POST" action="./validation/validAddEventGift.php" enctype="multipart/form-data" id="gift-form">
+<form method="POST" action="./config_event/validation/validAddEventGift.php" enctype="multipart/form-data" id="gift-form">
 <input type="hidden" name="statut_actuel" value="<?= $statut ?>">
 <input type="hidden" name="step" value="<?= $step ?>">
 <input type="hidden" name="active_phase" value="<?= htmlspecialchars($activePhase) ?>" id="input-active-phase">
 
-<?php
-foreach ($allPhases as $ph):
-    $phId = str_replace('-', '_', $ph);
-?>
+<?php foreach ($allPhases as $ph):
+    $phId = str_replace('-', '_', $ph); ?>
 <input type="hidden" id="hidden-intro-<?= $phId ?>"
        name="phases[<?= htmlspecialchars($ph) ?>][introduction]"
        value="<?= htmlspecialchars($giftConfig[$ph]['introduction'] ?? '') ?>">
@@ -135,8 +143,6 @@ foreach ($allPhases as $ph):
 <?php endforeach; ?>
 
 <h2>Event information :</h2>
-
-
 
 <div class="ligne">
     <label class="<?= isset($errors['nom_projet']) ? 'error' : '' ?>">Project name :</label>
@@ -148,16 +154,15 @@ foreach ($allPhases as $ph):
     <?php endif; ?>
 </div>
 
-
 <div class="ligne">
     <label>Event type :</label>
     <select name="type_event" <?= $eventId ? 'disabled style="background:#e9e9e9;color:#888;cursor:not-allowed;"' : '' ?>>
-        <?php foreach (['Fun Month', 'Gift'] as $opt): ?>
-            <option value="<?= $opt ?>" <?= ($rep['type_event'] ?? 'Gift') === $opt ? 'selected' : '' ?>><?= $opt ?></option>
+        <?php foreach (['Fun Month', 'Donation'] as $opt): ?>
+            <option value="<?= $opt ?>" <?= ($rep['type_event'] ?? 'Donation') === $opt ? 'selected' : '' ?>><?= $opt ?></option>
         <?php endforeach; ?>
     </select>
     <?php if ($eventId): ?>
-        <input type="hidden" name="type_event" value="<?= htmlspecialchars($rep['type_event'] ?? 'Gift') ?>">
+        <input type="hidden" name="type_event" value="<?= htmlspecialchars($rep['type_event'] ?? 'Donation') ?>">
     <?php endif; ?>
 </div>
 
@@ -184,7 +189,7 @@ foreach ($allPhases as $ph):
         <label>Logo :</label>
         <div class="gift-asset-input" data-asset="logo" id="gift-logo-btn">
             <span class="gift-asset-name" id="gift-logo-name"><?= htmlspecialchars($logoDisplay) ?: 'Add picture' ?></span>
-            <img src="./img/AddPngPicture.png" style="width:14px;height:15px;flex-shrink:0;">
+            <img src="./config_event/img/AddPngPicture.png" style="width:14px;height:15px;flex-shrink:0;">
             <input type="file" accept="image/png,image/jpeg" id="gift-logo-file" style="display:none;">
         </div>
     </div>
@@ -198,7 +203,7 @@ foreach ($allPhases as $ph):
         <label>Arriere plan :</label>
         <div class="gift-asset-input" data-asset="arriere_plan" id="gift-arriere-btn">
             <span class="gift-asset-name" id="gift-arriere-name"><?= htmlspecialchars($arriereDisplay) ?: 'Add picture' ?></span>
-            <img src="./img/AddPngPicture.png" style="width:14px;height:15px;flex-shrink:0;">
+            <img src="./config_event/img/AddPngPicture.png" style="width:14px;height:15px;flex-shrink:0;">
             <input type="file" accept="image/png,image/jpeg" id="gift-arriere-file" style="display:none;">
         </div>
     </div>
@@ -206,47 +211,64 @@ foreach ($allPhases as $ph):
 
 <div class="ligne">
     <label class="<?= isset($errors['launching_date']) ? 'error' : '' ?>">Launch Collection phase :</label>
-    <input type="date" name="launching_date"
-        class="<?= isset($errors['launching_date']) ? 'error' : '' ?>"
-        value="<?= htmlspecialchars($rep['launching_date'] ?? '') ?>">
+    <div class="date-time-group">
+        <input type="date" name="launching_date"
+            class="<?= isset($errors['launching_date']) ? 'error' : '' ?>"
+            value="<?= htmlspecialchars($rep['launching_date'] ?? '') ?>">
+        <input type="time" name="launching_time"
+            value="<?= htmlspecialchars($rep['launching_time'] ?? '00:00') ?>">
+    </div>
     <?php if (isset($errors['launching_date'])): ?>
         <span class="error"><?= $errors['launching_date'] ?></span>
     <?php endif; ?>
 </div>
+
 <div class="ligne">
     <label class="<?= isset($errors['pre_donation_date']) ? 'error' : '' ?>">Pre-donation handover :</label>
-    <input type="date" name="pre_donation_date"
-        class="<?= isset($errors['pre_donation_date']) ? 'error' : '' ?>"
-        value="<?= htmlspecialchars($rep['pre_donation_date'] ?? '') ?>">
+    <div class="date-time-group">
+        <input type="date" name="pre_donation_date"
+            class="<?= isset($errors['pre_donation_date']) ? 'error' : '' ?>"
+            value="<?= htmlspecialchars($rep['pre_donation_date'] ?? '') ?>">
+        <input type="time" name="pre_donation_time"
+            value="<?= htmlspecialchars($rep['pre_donation_time'] ?? '00:00') ?>">
+    </div>
     <?php if (isset($errors['pre_donation_date'])): ?>
         <span class="error"><?= $errors['pre_donation_date'] ?></span>
     <?php endif; ?>
 </div>
+
 <div class="ligne">
     <label class="<?= isset($errors['post_donation_date']) ? 'error' : '' ?>">Post-donation handover :</label>
-    <input type="date" name="post_donation_date"
-        class="<?= isset($errors['post_donation_date']) ? 'error' : '' ?>"
-        value="<?= htmlspecialchars($rep['post_donation_date'] ?? '') ?>">
+    <div class="date-time-group">
+        <input type="date" name="post_donation_date"
+            class="<?= isset($errors['post_donation_date']) ? 'error' : '' ?>"
+            value="<?= htmlspecialchars($rep['post_donation_date'] ?? '') ?>">
+        <input type="time" name="post_donation_time"
+            value="<?= htmlspecialchars($rep['post_donation_time'] ?? '00:00') ?>">
+    </div>
     <?php if (isset($errors['post_donation_date'])): ?>
         <span class="error"><?= $errors['post_donation_date'] ?></span>
     <?php endif; ?>
 </div>
+
 <div class="ligne">
     <label class="<?= isset($errors['close_date']) ? 'error' : '' ?>">Close event :</label>
-    <input type="date" name="close_date"
-        class="<?= isset($errors['close_date']) ? 'error' : '' ?>"
-        value="<?= htmlspecialchars($rep['close_date'] ?? '') ?>">
+    <div class="date-time-group">
+        <input type="date" name="close_date"
+            class="<?= isset($errors['close_date']) ? 'error' : '' ?>"
+            value="<?= htmlspecialchars($rep['close_date'] ?? '') ?>">
+        <input type="time" name="close_time"
+            value="<?= htmlspecialchars($rep['close_time'] ?? '00:00') ?>">
+    </div>
     <?php if (isset($errors['close_date'])): ?>
         <span class="error"><?= $errors['close_date'] ?></span>
     <?php endif; ?>
 </div>
 
-
-
 <div class="phase-tabs">
-    <?php foreach ($allPhases as $ph): 
+    <?php foreach ($allPhases as $ph):
         $phId = str_replace('-', '_', $ph);
-        $cfg = $giftConfig[$ph] ?? [];
+        $cfg  = $giftConfig[$ph] ?? [];
         $phaseComplete = !empty($cfg['introduction']) && !empty($cfg['about_association']) && !empty($cfg['image1']) && !empty($cfg['image2']);
     ?>
     <div style="display:inline-flex;align-items:center;gap:4px;">
@@ -256,8 +278,8 @@ foreach ($allPhases as $ph):
                 onclick="setPhase('<?= $ph ?>', this)">
             <?= $phaseLabels[$ph] ?>
         </button>
-        <img src="./img/imageOk.png" 
-             id="phase-ok-<?= $phId ?>" 
+        <img src="./config_event/img/imageOk.png"
+             id="phase-ok-<?= $phId ?>"
              style="width:13px;height:13px;<?= $phaseComplete ? '' : 'display:none;' ?>">
     </div>
     <?php endforeach; ?>
@@ -268,7 +290,7 @@ foreach ($allPhases as $ph):
         <label>Image 1 <span id="phase-image1-label" style="color:#888;font-size:11px;"></span>:</label>
         <div class="gift-asset-input gift-img-full" id="phase-image1-btn" style="cursor:pointer;">
             <span class="gift-asset-name" id="phase-image1-name">Add picture</span>
-            <img src="./img/AddPngPicture.png" style="width:14px;height:15px;flex-shrink:0;">
+            <img src="./config_event/img/AddPngPicture.png" style="width:14px;height:15px;flex-shrink:0;">
             <input type="file" accept="image/png,image/jpeg" id="phase-image1-file" style="display:none;">
         </div>
     </div>
@@ -276,13 +298,11 @@ foreach ($allPhases as $ph):
         <label>Image 2 <span id="phase-image2-label" style="color:#888;font-size:11px;"></span>:</label>
         <div class="gift-asset-input gift-img-full" id="phase-image2-btn" style="cursor:pointer;">
             <span class="gift-asset-name" id="phase-image2-name">Add picture</span>
-            <img src="./img/AddPngPicture.png" style="width:14px;height:15px;flex-shrink:0;">
+            <img src="./config_event/img/AddPngPicture.png" style="width:14px;height:15px;flex-shrink:0;">
             <input type="file" accept="image/png,image/jpeg" id="phase-image2-file" style="display:none;">
         </div>
     </div>
 </div>
-
-
 
 <div class="gift-editors-section">
     <div class="gift-editors-left">
@@ -297,10 +317,10 @@ foreach ($allPhases as $ph):
                         <option value="1">8pt</option><option value="2">10pt</option>
                         <option value="3" selected>12pt</option><option value="4">14pt</option><option value="5">18pt</option>
                     </select>
-                    <button type="button" class="editor-btn editor-align" onclick="editorCmd('introduction-editor','justifyLeft')"><img src="./img/JustifyLeft_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
-                    <button type="button" class="editor-btn editor-align" onclick="editorCmd('introduction-editor','justifyCenter')"><img src="./img/JustifyCenter_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
-                    <button type="button" class="editor-btn editor-align editor-align-right" onclick="editorCmd('introduction-editor','justifyRight')"><img src="./img/JustifyRight_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
-                    <button type="button" class="editor-btn editor-align" onclick="editorCmd('introduction-editor','justifyFull')"><img src="./img/JustifyFull_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
+                    <button type="button" class="editor-btn editor-align" onclick="editorCmd('introduction-editor','justifyLeft')"><img src="./config_event/img/JustifyLeft_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
+                    <button type="button" class="editor-btn editor-align" onclick="editorCmd('introduction-editor','justifyCenter')"><img src="./config_event/img/JustifyCenter_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
+                    <button type="button" class="editor-btn editor-align editor-align-right" onclick="editorCmd('introduction-editor','justifyRight')"><img src="./config_event/img/JustifyRight_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
+                    <button type="button" class="editor-btn editor-align" onclick="editorCmd('introduction-editor','justifyFull')"><img src="./config_event/img/JustifyFull_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
                 </div>
                 <div class="editor-content" id="introduction-editor" contenteditable="true"></div>
             </div>
@@ -316,8 +336,6 @@ foreach ($allPhases as $ph):
     </div>
 </div>
 
-
-
 <div class="editor-bloc" style="margin-top:14px;">
     <label>About the association :</label>
     <div class="editor-wrapper">
@@ -329,10 +347,10 @@ foreach ($allPhases as $ph):
                 <option value="1">8pt</option><option value="2">10pt</option>
                 <option value="3" selected>12pt</option><option value="4">14pt</option><option value="5">18pt</option>
             </select>
-            <button type="button" class="editor-btn editor-align" onclick="editorCmd('about-editor','justifyLeft')"><img src="./img/JustifyLeft_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
-            <button type="button" class="editor-btn editor-align" onclick="editorCmd('about-editor','justifyCenter')"><img src="./img/JustifyCenter_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
-            <button type="button" class="editor-btn editor-align editor-align-right" onclick="editorCmd('about-editor','justifyRight')"><img src="./img/JustifyRight_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
-            <button type="button" class="editor-btn editor-align" onclick="editorCmd('about-editor','justifyFull')"><img src="./img/JustifyFull_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
+            <button type="button" class="editor-btn editor-align" onclick="editorCmd('about-editor','justifyLeft')"><img src="./config_event/img/JustifyLeft_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
+            <button type="button" class="editor-btn editor-align" onclick="editorCmd('about-editor','justifyCenter')"><img src="./config_event/img/JustifyCenter_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
+            <button type="button" class="editor-btn editor-align editor-align-right" onclick="editorCmd('about-editor','justifyRight')"><img src="./config_event/img/JustifyRight_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
+            <button type="button" class="editor-btn editor-align" onclick="editorCmd('about-editor','justifyFull')"><img src="./config_event/img/JustifyFull_icon.png" style="width:14px;height:14px;pointer-events:none;"></button>
         </div>
         <div class="editor-content" id="about-editor" contenteditable="true"></div>
     </div>
@@ -343,9 +361,6 @@ foreach ($allPhases as $ph):
 </div>
 
 <br><hr>
-
-
-
 
 <div class="ligne">
     <label class="<?= isset($errors['pays']) ? 'error' : '' ?>">Country :</label>
@@ -364,9 +379,6 @@ foreach ($allPhases as $ph):
     <?php endif; ?>
 </div>
 
-
-
-
 <div class="bloc-banniere">
     <h2>Event banner management</h2>
     <p style="color:#999;font-style:italic;">Count equals the number of missing images per language</p>
@@ -378,50 +390,47 @@ foreach ($allPhases as $ph):
         <button type="button" class="onglet" id="onglet-others" style="display:none" onclick="chargeGiftOnglet('others', this)">Others (<span id="compteur-others">0</span>)</button>
     </div>
 
-   
-
     <div class="contenu actif" id="france">
         <h3>Main display</h3>
         <div class="grille">
-            <div class="slot" data-source="france" data-site="P" data-mode="logInOut"><div class="slot-label">P 220x181 (Co et Déco) <span class="icon-interrogation">?<img src="./img/banner_P.png" class="banner-preview-large"></span></div><div class="slot-input" data-size="220x181"><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="DCM" data-mode="logIN">  <div class="slot-label">DCM 298x130 (Co) <span class="icon-interrogation">?<img src="./img/banner_DCM_login.png" class="banner-preview"></span></div><div class="slot-input" data-size="298x130"><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="DCM" data-mode="logout"> <div class="slot-label">DCM 428x125 (Déco) <span class="icon-interrogation">?<img src="./img/banner_DCM_logout.png" class="banner-preview"></span></div><div class="slot-input" data-size="428x125"><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="TDP" data-mode="logout"> <div class="slot-label">TDP 500x400 (Déco) <span class="icon-interrogation">?<img src="./img/banner_TDP_logout.png" class="banner-preview"></span></div><div class="slot-input" data-size="500x400"><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="TDP" data-mode="logIN">  <div class="slot-label">TDP ? X ? (Co) <span class="icon-interrogation">?<img src="./img/banner1.png" class="banner-preview"></span></div><div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="AP" data-mode="logInOut"><div class="slot-label">AP 455x184 (Co et Déco) <span class="icon-interrogation">?<img src="./img/banner_AP.png" class="banner-preview-large"></span></div><div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="APPS" data-mode=""> <div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="./img/banner_APPS.png" class="banner-preview"></span></div><div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="P" data-mode="logInOut"><div class="slot-label">P 220x181 (Co et Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner_P.png" class="banner-preview-large"></span></div><div class="slot-input" data-size="220x181"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="DCM" data-mode="logIN">  <div class="slot-label">DCM 298x130 (Co) <span class="icon-interrogation">?<img src="./config_event/img/banner_DCM_login.png" class="banner-preview"></span></div><div class="slot-input" data-size="298x130"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="DCM" data-mode="logout"> <div class="slot-label">DCM 428x125 (Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner_DCM_logout.png" class="banner-preview"></span></div><div class="slot-input" data-size="428x125"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="TDP" data-mode="logout"> <div class="slot-label">TDP 500x400 (Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner_TDP_logout.png" class="banner-preview"></span></div><div class="slot-input" data-size="500x400"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="TDP" data-mode="logIN">  <div class="slot-label">TDP ? X ? (Co) <span class="icon-interrogation">?<img src="./config_event/img/banner1.png" class="banner-preview"></span></div><div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="AP" data-mode="logInOut"><div class="slot-label">AP 455x184 (Co et Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner_AP.png" class="banner-preview-large"></span></div><div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="APPS" data-mode=""> <div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="./config_event/img/banner_APPS.png" class="banner-preview"></span></div><div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
         </div>
         <h3>Results display</h3>
         <div class="grille">
-            <div class="slot" data-source="france" data-site="P" data-mode="logInOut"><div class="slot-label">P 220x181 (Co et Déco) <span class="icon-interrogation">?<img src="./img/banner_P.png" class="banner-preview-large"></span></div><div class="slot-input" data-size="220x181"><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="DCM" data-mode="logIN">  <div class="slot-label">DCM 298x130 (Co) <span class="icon-interrogation">?<img src="./img/banner_DCM_login.png" class="banner-preview"></span></div><div class="slot-input" data-size="298x130"><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="DCM" data-mode="logout"> <div class="slot-label">DCM 428x125 (Déco) <span class="icon-interrogation">?<img src="./img/banner_DCM_logout.png" class="banner-preview"></span></div><div class="slot-input" data-size="428x125"><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="TDP" data-mode="logout"> <div class="slot-label">TDP 500x400 (Déco) <span class="icon-interrogation">?<img src="./img/banner_TDP_logout.png" class="banner-preview"></span></div><div class="slot-input" data-size="500x400"><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="TDP" data-mode="logIN">  <div class="slot-label">TDP ? X ? (Co) <span class="icon-interrogation">?<img src="./img/banner1.png" class="banner-preview"></span></div><div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="AP"  data-mode="logInOut"><div class="slot-label">AP 455x184 (Co et Déco) <span class="icon-interrogation">?<img src="./img/banner_AP.png" class="banner-preview-large"></span></div><div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
-            <div class="slot" data-source="france" data-site="APPS" data-mode=""> <div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="./img/banner_APPS.png" class="banner-preview"></span></div><div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="P" data-mode="logInOut"><div class="slot-label">P 220x181 (Co et Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner_P.png" class="banner-preview-large"></span></div><div class="slot-input" data-size="220x181"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="DCM" data-mode="logIN">  <div class="slot-label">DCM 298x130 (Co) <span class="icon-interrogation">?<img src="./config_event/img/banner_DCM_login.png" class="banner-preview"></span></div><div class="slot-input" data-size="298x130"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="DCM" data-mode="logout"> <div class="slot-label">DCM 428x125 (Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner_DCM_logout.png" class="banner-preview"></span></div><div class="slot-input" data-size="428x125"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="TDP" data-mode="logout"> <div class="slot-label">TDP 500x400 (Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner_TDP_logout.png" class="banner-preview"></span></div><div class="slot-input" data-size="500x400"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="TDP" data-mode="logIN">  <div class="slot-label">TDP ? X ? (Co) <span class="icon-interrogation">?<img src="./config_event/img/banner1.png" class="banner-preview"></span></div><div class="slot-input" data-size=""><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="AP"  data-mode="logInOut"><div class="slot-label">AP 455x184 (Co et Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner_AP.png" class="banner-preview-large"></span></div><div class="slot-input" data-size="455x184"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="france" data-site="APPS" data-mode=""> <div class="slot-label">APPS 620x180 <span class="icon-interrogation">?<img src="./config_event/img/banner_APPS.png" class="banner-preview"></span></div><div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
         </div>
     </div>
-     
 
     <div class="contenu" id="uk">
         <h3>Main display</h3>
         <div class="grille">
-            <div class="slot" data-source="uk" data-site="MDO" data-mode="logout"><div class="slot-label">MDO 620x180 (Déco) <span class="icon-interrogation">?<img src="./img/banner1.png" class="banner-preview"></span></div><div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="uk" data-site="MDO" data-mode="logout"><div class="slot-label">MDO 620x180 (Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner1.png" class="banner-preview"></span></div><div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
         </div>
     </div>
 
     <div class="contenu" id="italy">
         <h3>Main display</h3>
         <div class="grille">
-            <div class="slot" data-source="italy" data-site="RS" data-mode="logout"><div class="slot-label">RS 620x180 (Déco) <span class="icon-interrogation">?<img src="./img/banner1.png" class="banner-preview"></span></div><div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="italy" data-site="RS" data-mode="logout"><div class="slot-label">RS 620x180 (Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner1.png" class="banner-preview"></span></div><div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
         </div>
     </div>
 
     <div class="contenu" id="others">
         <h3>Main display</h3>
         <div class="grille">
-            <div class="slot" data-source="others" data-site="RS" data-mode="logout"><div class="slot-label">RS 620x180 (Déco) <span class="icon-interrogation">?<img src="./img/banner1.png" class="banner-preview"></span></div><div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
+            <div class="slot" data-source="others" data-site="RS" data-mode="logout"><div class="slot-label">RS 620x180 (Déco) <span class="icon-interrogation">?<img src="./config_event/img/banner1.png" class="banner-preview"></span></div><div class="slot-input" data-size="620x180"><span>Add PNG picture</span></div></div>
         </div>
     </div>
 </div>
@@ -446,6 +455,6 @@ var eventId = <?= json_encode($_SESSION['event_id'] ?? null) ?>;
 var giftConfig = <?= json_encode($giftConfig) ?>;
 var activePhase = <?= json_encode($activePhase) ?>;
 </script>
-<script src="./js/script_gift.js"></script>
+<script src="./config_event/js/script_gift.js"></script>
 </body>
 </html>

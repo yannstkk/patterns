@@ -9,5 +9,5 @@ if ($id) {
         ->execute([':id' => $id]);
 }
 
-header('Location: ../index.php?page=ListEvent');
+header('Location: ../index.php?menuprincipal=config_envent&partie=ListEvent');
 exit;

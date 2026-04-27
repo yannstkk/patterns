@@ -7,12 +7,20 @@ $statutActuel = $_POST['statut_actuel'] ?? 'draft';
 $step = (int)($_POST['step'] ?? 1);
 $eventId = $_SESSION['event_id'] ?? null;
 $isEdit = $_SESSION['is_edit'] ?? false;
-$previousRep  = $_SESSION['reponses'] ?? [];
+$previousRep = $_SESSION['reponses'] ?? [];
 $errors = [];
 
+function buildDatetime(string $date, string $time): string {
+    $t = preg_match('/^\d{2}:\d{2}$/', trim($time)) ? trim($time) : '00:00';
+    return $date . ' ' . $t . ':00';
+}
+
 $launchingDate = trim($_POST['launching_date'] ?? '');
+$launchingTime = trim($_POST['launching_time'] ?? '00:00');
 $resultDate = trim($_POST['result_date'] ?? '');
+$resultTime = trim($_POST['result_time'] ?? '00:00');
 $endDate = trim($_POST['end_date'] ?? '');
+$endTime = trim($_POST['end_time'] ?? '00:00');
 
 function getRequiredImageSlots(array $pays) {
     $required = [];
@@ -43,7 +51,7 @@ if ($step === 1) {
 
     if (!empty($errors)) {
         $_SESSION['step'] = $step;
-        header('Location: ../index.php?page=AddEvent');
+    header('Location: https://bao.madeinsurveys.com/bo/index.php?menuprincipal=config_event&partie=AddEvent');
         exit;
     }
 
@@ -59,17 +67,14 @@ if ($step === 1) {
     $id = saveEvent($data, null, 'draft');
     if ($id) {
         $_SESSION['event_id'] = $id;
-        $_SESSION['statut']   = 'draft';
+        $_SESSION['statut'] = 'draft';
         $_SESSION['reponses'] = array_merge($previousRep, $data);
     }
 
     unset($_SESSION['step']);
     $typeEvent = trim($_POST['type_event'] ?? 'Fun Month');
-    if ($typeEvent === 'Gift') {
-        header('Location: ../index.php?page=AddEventGift');
-    } else {
-        header('Location: ../index.php?page=AddEvent');
-    }
+    header('Location: https://bao.madeinsurveys.com/bo/index.php?menuprincipal=config_event&partie='. ($typeEvent === 'Donation' ? 'AddEventGift' : 'AddEvent'));
+
     exit;
 }
 
@@ -90,13 +95,13 @@ if (empty($endDate)) {
 }
 
 if (empty($errors)) {
-    $formatLaunch = DateTime::createFromFormat('Y-m-d', $launchingDate);
-    $formatResult = DateTime::createFromFormat('Y-m-d', $resultDate);
-    $formatEnd    = DateTime::createFromFormat('Y-m-d', $endDate);
+    $formatLaunch = DateTime::createFromFormat('Y-m-d H:i:s', buildDatetime($launchingDate, $launchingTime));
+    $formatResult = DateTime::createFromFormat('Y-m-d H:i:s', buildDatetime($resultDate, $resultTime));
+    $formatEnd = DateTime::createFromFormat('Y-m-d H:i:s', buildDatetime($endDate, $endTime));
 
     if (!$formatLaunch) $errors['launching_date'] = 'Invalid launch date format';
-    if (!$formatResult) $errors['result_date']     = 'Invalid result date format';
-    if (!$formatEnd)    $errors['end_date']         = 'Invalid end date format';
+    if (!$formatResult) $errors['result_date'] = 'Invalid result date format';
+    if (!$formatEnd) $errors['end_date'] = 'Invalid end date format';
 
     if (empty($errors)) {
         $today = new DateTime();
@@ -108,11 +113,11 @@ if (empty($errors)) {
             $stmtOrig->execute([':id' => $eventId]);
             $rowOrig = $stmtOrig->fetch(PDO::FETCH_ASSOC);
             if ($rowOrig && !empty($rowOrig['date_debut'])) {
-                $originalLaunch = DateTime::createFromFormat('Y-m-d', date('Y-m-d', strtotime($rowOrig['date_debut'])));
+                $originalLaunch = new DateTime($rowOrig['date_debut']);
             }
         }
 
-        $launchDateChanged = !$isEdit || !$originalLaunch || $formatLaunch->format('Y-m-d') !== $originalLaunch->format('Y-m-d');
+        $launchDateChanged = !$isEdit || !$originalLaunch || $formatLaunch->format('Y-m-d H:i') !== $originalLaunch->format('Y-m-d H:i');
 
         if ($launchDateChanged && $formatLaunch < $today) {
             $errors['launching_date'] = "The launch date can't be before today";
@@ -148,33 +153,20 @@ if (empty($errors) && $action === 'pre-publish') {
     }
 }
 
-$_SESSION['reponses'] = array_merge($previousRep, $_POST, ['pays_list' => $paysEffectifs]);
+$_SESSION['reponses'] = array_merge($previousRep, $_POST, [
+    'pays_list' => $paysEffectifs,
+    'launching_date' => $launchingDate,
+    'launching_time' => $launchingTime,
+    'result_date' => $resultDate,
+    'result_time' => $resultTime,
+    'end_date' => $endDate,
+    'end_time' => $endTime,
+]);
 $_SESSION['errors'] = $errors;
 
 if (!empty($errors)) {
     $_SESSION['step'] = $step;
-    header('Location: ../index.php?page=AddEvent');
-    exit;
-}
-
-if ($action === 'pre-publish' && $eventId) {
-    $nouvelEtat = $statutActuel === 'draft' ? 'pre-prod' : ($statutActuel === 'pre-prod' ? 'prod' : $statutActuel);
-
-    $data = [
-        'nom_projet' => trim($_POST['nom_projet']),
-        'type_event' => $_POST['type_event'] ?? 'Fun Month',
-        'link' => trim($_POST['link']),
-        'launching_date' => $launchingDate,
-        'result_date' => $resultDate,
-        'end_date' => $endDate,
-        'pays_list' => $paysEffectifs,
-    ];
-    saveEvent($data, $eventId, $nouvelEtat);
-
-    $_SESSION['statut']   = $nouvelEtat;
-    $_SESSION['reponses'] = array_merge($_SESSION['reponses'], $data);
-    unset($_SESSION['step']);
-    header('Location: ../index.php?page=AddEvent');
+    header('Location: https://bao.madeinsurveys.com/bo/index.php?menuprincipal=config_event&partie=AddEvent');
     exit;
 }
 
@@ -182,18 +174,30 @@ $data = [
     'nom_projet' => trim($_POST['nom_projet']),
     'type_event' => $_POST['type_event'] ?? 'Fun Month',
     'link' => trim($_POST['link']),
-    'launching_date' => $launchingDate,
-    'result_date' => $resultDate,
-    'end_date' => $endDate,
+    'launching_date' => buildDatetime($launchingDate, $launchingTime),
+    'result_date' => buildDatetime($resultDate, $resultTime),
+    'end_date' => buildDatetime($endDate, $endTime),
     'pays_list' => $paysEffectifs,
 ];
+
+if ($action === 'pre-publish' && $eventId) {
+    $nouvelEtat = $statutActuel === 'draft'
+        ? 'pre-prod'
+        : ($statutActuel === 'pre-prod' ? 'prod' : $statutActuel);
+
+    saveEvent($data, $eventId, $nouvelEtat);
+    $_SESSION['statut'] = $nouvelEtat;
+    unset($_SESSION['step']);
+    header('Location: https://bao.madeinsurveys.com/bo/index.php?menuprincipal=config_event&partie=AddEvent');
+    exit;
+}
+
 $id = saveEvent($data, $eventId, $statutActuel);
 if ($id) {
     $_SESSION['event_id'] = $id;
     $_SESSION['statut'] = $statutActuel;
-    $_SESSION['reponses'] = array_merge($_SESSION['reponses'], $data);
 }
 
 unset($_SESSION['step']);
-header('Location: ../index.php?page=AddEvent');
+    header('Location: https://bao.madeinsurveys.com/bo/index.php?menuprincipal=config_event&partie=AddEvent');
 exit;

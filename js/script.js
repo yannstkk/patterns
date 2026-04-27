@@ -14,7 +14,6 @@ var urlsPreProd = {
     'MOD': {login: '', logout: ''},
 };
 
-
 var urlsProd = {
     'P': {login: 'https://pipeul.com/', logout: 'https://pipeul.com/'},
     'DCM': {login: 'https://devenirclientmystere.com/', logout: 'https://devenirclientmystere.com/'},
@@ -29,10 +28,12 @@ var urlsProd = {
     'MDO': {login: 'https://mystery-shopper.com/', logout: 'https://mystery-shopper.com/'},
     'PPT': {login: 'https://paidproducttesting.co.uk/', logout: 'https://paidproducttesting.co.uk/'},
     'MOD': {login: '', logout: ''},
-
 };
 
-
+history.pushState(null, '', window.location.href);
+window.addEventListener('popstate', function () {
+    window.location.replace('index.php?page=ListEvent');
+});
 
 function chargeOnglet(id, bouton) {
     document.querySelectorAll('.onglet').forEach(function(o) { o.classList.remove('actif'); });
@@ -228,7 +229,7 @@ function checkImageDimension(file, slot, pays, slotIndex, siteName, loginLogout,
             span.style.color = '#cc0000';
             slot.querySelector('input[type="file"]').value = '';
             var indicator = slot.parentElement.querySelector('.slot-indicator');
-            if (indicator) { indicator.innerHTML = '<img src="./img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
+            if (indicator) { indicator.innerHTML = '<img src="./config_event/img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
             updateCounter(pays);
         }
     };
@@ -266,11 +267,11 @@ function uploadImage(file, slot, pays, slotIndex, siteName, loginLogout, section
             span.style.color = '#2e7d32';
             if (!savedImages[pays]) savedImages[pays] = {};
             savedImages[pays][slotIndex] = data.filename;
-            if (indicator) { indicator.innerHTML = '<img src="./img/imageOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
+            if (indicator) { indicator.innerHTML = '<img src="./config_event/img/imageOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
         } else {
             span.textContent = data.error;
             span.style.color = '#cc0000';
-            if (indicator) { indicator.innerHTML = '<img src="./img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
+            if (indicator) { indicator.innerHTML = '<img src="./config_event/img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
         }
         updateCounter(pays);
     })
@@ -278,7 +279,7 @@ function uploadImage(file, slot, pays, slotIndex, siteName, loginLogout, section
         span.textContent = 'Network error';
         span.style.color = '#cc0000';
         var indicator = slot.parentElement.querySelector('.slot-indicator');
-        if (indicator) { indicator.innerHTML = '<img src="./img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
+        if (indicator) { indicator.innerHTML = '<img src="./config_event/img/imageNotOk.png" style="width:13px;height:13px;">'; indicator.style.display = ''; }
         updateCounter(pays);
     });
 }
@@ -439,7 +440,7 @@ document.addEventListener('DOMContentLoaded', function() {
         slot.style.flex = '1';
 
         var icon = document.createElement('img');
-        icon.src = './img/AddPngPicture.png';
+        icon.src = './config_event/img/AddPngPicture.png';
         icon.style.width = '14px';
         icon.style.height = '15px';
         icon.style.flexShrink = '0';
@@ -586,7 +587,7 @@ document.addEventListener('DOMContentLoaded', function() {
         icon.className = 'icon-links';
 
         var iconImg = document.createElement('img');
-        iconImg.src = './img/linkIcon.png';
+        iconImg.src = './config_event/img/linkIcon.png';
         iconImg.className = 'link-icon-img';
         icon.appendChild(iconImg);
 
@@ -597,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
         title.className = 'links-popup-title';
 
         var titleIcon = document.createElement('img');
-        titleIcon.src = './img/linkIcon.png';
+        titleIcon.src = './config_event/img/linkIcon.png';
         titleIcon.className = 'link-icon-img-small';
         title.appendChild(titleIcon);
         title.appendChild(document.createTextNode(' Select the website :'));

@@ -25,13 +25,13 @@ $mimeType = $finfo->file($tmpPath);
 $allowedMimes = ['image/png', 'image/jpeg'];
 if (!in_array($mimeType, $allowedMimes)) {
     ob_end_clean();
-    echo json_encode(['success' => false, 'error' => 'File must be PNG or JPEG']);
+    echo json_encode(['success' => false, 'error' => 'File must bee PNG or JPEG']);
     exit;
 }
 
 if (!function_exists('imagewebp')) {
     ob_end_clean();
-    echo json_encode(['success' => false, 'error' => 'WebP not supported (GD missing)']);
+    echo json_encode(['success' => false, 'error' => 'WebP not supported GD missing)']);
     exit;
 }
 

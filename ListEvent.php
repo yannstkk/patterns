@@ -1,5 +1,7 @@
 <?php
-include("./model/event.php");
+
+
+include(__DIR__."/model/event.php");
 session_start();
 $events = getListEvent();
 ?>
@@ -9,7 +11,7 @@ $events = getListEvent();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Management of Events</title>
-    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./config_event/css/style.css">
 </head>
 <body>
 <div class="page">
@@ -19,15 +21,15 @@ $events = getListEvent();
     <div class="filtres">
         <button class="filtre-btn actif" onclick="filtrer('all', this)">All</button>
         <button class="filtre-btn" onclick="filtrer('Fun Month', this)">Fun Month</button>
-        <button class="filtre-btn" onclick="filtrer('Gift', this)">Gift</button>
+        <button class="filtre-btn" onclick="filtrer('Donation', this)">Donation</button>
     </div>
 
     <div class="barre-outils">
         <div class="recherche">
-            <img src="./img/searchIcon.png" alt="" style="width:13px;opacity:0.55;flex-shrink:0;">
+            <img src="./config_event/img/searchIcon.png" alt="" style="width:13px;opacity:0.55;flex-shrink:0;">
             <input type="text" id="champ-recherche" placeholder="Search" oninput="appliquerFiltres()">
         </div>
-        <a href="index.php?page=AddEvent&new=1" class="btn-add">+Add an event</a>
+        <a href="./index.php?menuprincipal=config_envent&partie=AddEvent&new=11" class="btn-add">+Add an event</a>
     </div>
 
 
@@ -94,16 +96,16 @@ $events = getListEvent();
             <td class="cell-status"><span class="status-badge <?= $badgeClass ?>" ><?= $badgeLabel ?></span></td>
             <td class="cell-actions">
                 <a href="<?= htmlspecialchars($e['supplement_url'] ?? '#') ?>" target="_blank" title="View">
-                    <img src="./img/webIcon.png" alt="View" style="width:17px;">
+                    <img src="./config_event/img/webIcon.png" alt="View" style="width:17px;">
                 </a>
-                <?php $editPage = ($e['type_event'] === 'Gift') ? 'AddEventGift' : 'AddEvent'; ?>
-                <a href="index.php?page=<?= $editPage ?>&edit=<?= (int)$e['ID'] ?>" title="Edit">
-                    <img src="./img/editIcon.png" alt="Edit" style="width:17px;">
+                <?php $editPage = ($e['type_event'] === 'Donation') ? 'AddEventGift' : 'AddEvent'; ?>
+                <a href="./index.php?menuprincipal=config_envent&partie=<?= $editPage ?>&edit=<?= (int)$e['ID'] ?>" title="Edit">
+                    <img src="./config_event/img/editIcon.png" alt="Edit" style="width:17px;">
                 </a>
                 <?php if ($etat === 'draft'): ?>
-                <a href="validation/deleteEvent.php?id=<?= (int)$e['ID'] ?>"
+                <a href="./config_event/validation/deleteEvent.php?id=<?= (int)$e['ID'] ?>"
                 onclick="return confirm('Delete this event?')" title="Delete">
-                    <img src="./img/deleteIcon.png" alt="Delete" style="width:17px;">
+                    <img src="./config_event/img/deleteIcon.png" alt="Delete" style="width:17px;">
                 </a>
                 <?php endif; ?>
             </td>
@@ -113,6 +115,6 @@ $events = getListEvent();
     </table>
 
 </div>
-<script src="./js/script.js"></script>
+<script src="./config_event/js/script.js"></script>
 </body>
 </html>
